@@ -14,6 +14,13 @@
 # See: https://github.com/github/gitignore/tree/main/Global
 #
 .utmp/
+.DS_Store
+.idea/
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
