@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f17bf496cf5cc4248a0ac22c7889bcd9, type: 3}
+  m_Name: BoardVisualSettings
+  m_EditorClassIdentifier: Assembly-CSharp::ColorBlockJam.Board.BoardVisualSettings
+  tilePrefab: {fileID: 1206849000195916627, guid: 580cae30c4096014891cab0bba3910fe, type: 3}
+  straightWallPrefab: {fileID: 6636776879154377481, guid: 28532467e39a0f44886ed98e6bddd440, type: 3}
+  cornerWallPrefab: {fileID: 2914791590249217770, guid: d785b6064552b104cbc1934add9e9504, type: 3}
+  gatePrefab: {fileID: 1110199887740494200, guid: 0020b4799b838be468da1d73efb47ef0, type: 3}
+  doorArrowPrefab: {fileID: 7833661932886393395, guid: 90015f64602fff949859c986c29a7662, type: 3}
+  blockPrefab: {fileID: 3971904819921418400, guid: 2337a40fc38facf45a9f6964e1b33d22, type: 3}
+  directionArrowPrefab: {fileID: 2017753944788222121, guid: e4d29bfc2f086f346aeb5b4df6641b36, type: 3}
+  iceTexture: {fileID: 2800000, guid: 3a42657c35c6c4ec881993628cbfb99a, type: 3}
+  iceMaterial: {fileID: 2100000, guid: 77bdb3ccc37cd3e46838c2f923119f97, type: 2}
+  iceCounterFont: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+  iceCounterFontSize: 20
+  iceCounterColor: {r: 1, g: 1, b: 1, a: 1}
+  iceCounterOffset: {x: 0, y: 1, z: 0}
+  blockMaterial: {fileID: 2100000, guid: 8f7217f236c9cb04f9462ad28960aa11, type: 2}
+  gateMaterial: {fileID: 2100000, guid: b3b6ea50c7ad7394c9a8f3146ed7b13e, type: 2}
+  wallMaterial: {fileID: 2100000, guid: 4cc479a02172ac048a718c749b53c4d0, type: 2}
+  cellSize: 1
+  tileOffset: {x: 0, y: 0, z: 0}
+  wallOffset: {x: 0, y: 0, z: 0}
+  cornerOffset: {x: 0, y: 0, z: 0}
+  gateOffset: {x: 0, y: 0, z: 0}
+  doorArrowOffset: {x: 0, y: 1, z: 0}
+  doorArrowVisualZ: 0.05
+  blockOffset: {x: 0, y: 0, z: 0}
+  straightWallBaseEuler: {x: 0, y: 0, z: 0}
+  gateBaseEuler: {x: 0, y: 0, z: 0}
+  doorArrowBaseEuler: {x: 0, y: 0, z: 0}
+  cornerBaseEuler: {x: 0, y: 0, z: 0}
+  tileEuler: {x: 0, y: 0, z: 0}
+  blockBaseEuler: {x: 0, y: 0, z: 0}

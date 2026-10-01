@@ -1,0 +1,178 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace ColorBlockJam.Gameplay
+{
+    public enum BlockMovementState
+    {
+        Idle,
+        Dragging,
+        Exiting,
+        Completed
+    }
+
+    [RequireComponent(typeof(ColorIdentity), typeof(BlockExitMotor), typeof(BlockFeatureController))]
+    public sealed class GridMovableBlock : MonoBehaviour
+    {
+        [SerializeField] private BoardGridState board;
+        [SerializeField] private List<Vector2Int> cells = new List<Vector2Int>();
+        [SerializeField] private BlockMovementState state;
+        [SerializeField] private BlockExitMotor exitMotor;
+        [SerializeField] private BlockFeatureController featureController;
+        [SerializeField] private IceLockFeature iceLock;
+
+        private readonly List<Vector2Int> previousCells = new List<Vector2Int>();
+
+        public IReadOnlyList<Vector2Int> Cells => cells;
+        public BoardGridState Board => board;
+        public BlockMovementState State => state;
+        public ColorIdentity ColorIdentity { get; private set; }
+
+        private void Awake()
+        {
+            if (exitMotor == null) exitMotor = GetComponent<BlockExitMotor>();
+            if (featureController == null) featureController = GetComponent<BlockFeatureController>();
+            if (iceLock == null) iceLock = GetComponent<IceLockFeature>();
+            ColorIdentity = GetComponent<ColorIdentity>();
+        }
+
+        public void Configure(BoardGridState boardState, IEnumerable<Vector2Int> occupiedCells,
+            ColorBlockJam.Levels.BlockFeatureData featureData)
+        {
+            board = boardState;
+            cells.Clear();
+            cells.AddRange(occupiedCells);
+            if (exitMotor == null) exitMotor = GetComponent<BlockExitMotor>();
+            if (featureController == null) featureController = GetComponent<BlockFeatureController>();
+            if (iceLock == null) iceLock = GetComponent<IceLockFeature>();
+            featureController.Configure(featureData);
+            if (ColorIdentity == null) ColorIdentity = GetComponent<ColorIdentity>();
+            board.Register(this);
+            state = BlockMovementState.Idle;
+        }
+
+        public bool BeginDrag()
+        {
+            if (state != BlockMovementState.Idle ||
+                (iceLock != null && iceLock.IsLocked) ||
+                !featureController.CanBeginDrag()) return false;
+            state = BlockMovementState.Dragging;
+            return true;
+        }
+
+        public void CancelDrag()
+        {
+            if (state == BlockMovementState.Dragging) state = BlockMovementState.Idle;
+        }
+
+        private void BeginExit(GateGroup gate, Vector3 alignedLocalPosition)
+        {
+            if (state != BlockMovementState.Dragging || gate == null) return;
+
+            board.ReleaseCells(this);
+            transform.localPosition = alignedLocalPosition;
+            state = BlockMovementState.Exiting;
+            float distance = board.CellSize * (GetDepthAlong(gate.ExitDirection) + 2f);
+            exitMotor.Play(gate.ExitDirection, distance, CompleteExit);
+        }
+
+        private void CompleteExit()
+        {
+            state = BlockMovementState.Completed;
+            board.NotifyBlockCompleted(this);
+            Destroy(gameObject);
+        }
+
+        private int GetDepthAlong(Vector2Int direction)
+        {
+            int min = int.MaxValue;
+            int max = int.MinValue;
+            bool horizontal = direction.x != 0;
+            foreach (Vector2Int cell in cells)
+            {
+                int value = horizontal ? cell.x : cell.y;
+                min = Mathf.Min(min, value);
+                max = Mathf.Max(max, value);
+            }
+            return max - min + 1;
+        }
+
+        public bool TryGetShiftedCells(Vector2Int delta, List<Vector2Int> result)
+        {
+            result.Clear();
+            foreach (Vector2Int cell in cells) result.Add(cell + delta);
+            return board != null && board.CanOccupy(this, result);
+        }
+
+        public bool CanOccupyAtOffset(Vector2 offsetInCells)
+        {
+            return board != null && board.CanOccupyAtOffset(this, cells, offsetInCells);
+        }
+
+        public Vector2 ResolveDragOffset(Vector2 current, Vector2 target)
+        {
+            target = featureController.FilterDragTarget(current, target);
+            current = MoveAlongAxis(current, target.x, true);
+            return MoveAlongAxis(current, target.y, false);
+        }
+
+        private Vector2 MoveAlongAxis(Vector2 current, float target, bool horizontal)
+        {
+            float start = horizontal ? current.x : current.y;
+            float distance = target - start;
+            int steps = Mathf.Max(1, Mathf.CeilToInt(Mathf.Abs(distance) / 0.2f));
+            Vector2 lastValid = current;
+
+            for (int step = 1; step <= steps; step++)
+            {
+                Vector2 candidate = current;
+                float value = Mathf.Lerp(start, target, step / (float)steps);
+                if (horizontal) candidate.x = value;
+                else candidate.y = value;
+
+                if (!CanOccupyAtOffset(candidate)) return FindCollisionLimit(lastValid, candidate);
+                lastValid = candidate;
+            }
+            return lastValid;
+        }
+
+        private Vector2 FindCollisionLimit(Vector2 valid, Vector2 blocked)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                Vector2 middle = (valid + blocked) * 0.5f;
+                if (CanOccupyAtOffset(middle)) valid = middle;
+                else blocked = middle;
+            }
+            return valid;
+        }
+
+        public bool TryBeginExit(Vector2Int blockDelta, Vector2Int movementDirection,
+            Vector3 alignedLocalPosition)
+        {
+            if (state != BlockMovementState.Dragging ||
+                !featureController.AllowsDirection(movementDirection) ||
+                !board.TryGetExitGate(this, blockDelta, movementDirection, out GateGroup gate))
+                return false;
+
+            BeginExit(gate, alignedLocalPosition);
+            return true;
+        }
+
+        public void CommitMove(Vector2Int delta, IReadOnlyList<Vector2Int> shiftedCells)
+        {
+            if (delta == Vector2Int.zero)
+            {
+                state = BlockMovementState.Idle;
+                return;
+            }
+
+            previousCells.Clear();
+            previousCells.AddRange(cells);
+            cells.Clear();
+            for (int i = 0; i < shiftedCells.Count; i++) cells.Add(shiftedCells[i]);
+            board.Move(this, previousCells, cells);
+            state = BlockMovementState.Idle;
+        }
+    }
+}
