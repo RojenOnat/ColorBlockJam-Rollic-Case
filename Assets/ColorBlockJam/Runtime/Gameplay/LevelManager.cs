@@ -20,6 +20,7 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private GameObject endGamePanel;
         [SerializeField] private Button playButton;
         [SerializeField] private Camera sceneCamera;
+        [SerializeField] private LevelTimer levelTimer;
 
         private GameObject currentLevelInstance;
         private LevelDefinition currentLevel;
@@ -32,6 +33,7 @@ namespace ColorBlockJam.Gameplay
         private void Awake()
         {
             if (playButton != null) playButton.onClick.AddListener(StartCurrentLevel);
+            if (levelTimer != null) levelTimer.Expired += FailCurrentLevel;
             if (sceneCamera != null) sceneCamera.gameObject.SetActive(false);
         }
 
@@ -46,6 +48,7 @@ namespace ColorBlockJam.Gameplay
         private void OnDestroy()
         {
             if (playButton != null) playButton.onClick.RemoveListener(StartCurrentLevel);
+            if (levelTimer != null) levelTimer.Expired -= FailCurrentLevel;
         }
 
         public void StartCurrentLevel()
@@ -80,6 +83,7 @@ namespace ColorBlockJam.Gameplay
             }
             boardBuilder.Configure(currentLevel, visualSettings);
             boardBuilder.Rebuild();
+            levelTimer?.StartCountdown(currentLevel.TimerSeconds);
 
             LevelLoaded?.Invoke(currentLevel, currentLevelIndex);
             return true;
@@ -92,6 +96,7 @@ namespace ColorBlockJam.Gameplay
 
         public void CompleteCurrentLevel()
         {
+            levelTimer?.StopCountdown();
             LevelProgress.UnlockThrough(currentLevelIndex + 1);
             SetScreenState(showMenu: false, showHud: true, showEndGame: true);
         }
@@ -104,11 +109,13 @@ namespace ColorBlockJam.Gameplay
 
         public void FailCurrentLevel()
         {
+            levelTimer?.StopCountdown();
             SetScreenState(showMenu: false, showHud: true, showEndGame: true);
         }
 
         public void ShowMainMenu()
         {
+            levelTimer?.StopCountdown();
             DestroyCurrentLevel();
             SetScreenState(showMenu: true, showHud: false, showEndGame: false);
         }
