@@ -19,6 +19,15 @@ namespace ColorBlockJam.Gameplay
 
         public float CellSize => cellSize;
         public int RemainingBlockCount => blocks.Count;
+        public bool HasBlocksExiting
+        {
+            get
+            {
+                foreach (GridMovableBlock block in blocks)
+                    if (block != null && block.State == BlockMovementState.Exiting) return true;
+                return false;
+            }
+        }
         public event Action<int> RemainingBlockCountChanged;
         // Feature systems listen to this single gameplay event instead of talking to one another.
         public event Action<GridMovableBlock> BlockExited;

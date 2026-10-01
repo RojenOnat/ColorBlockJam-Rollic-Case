@@ -18,6 +18,8 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private GameObject mainMenuPanel;
         [SerializeField] private GameObject gameplayHud;
         [SerializeField] private GameObject endGamePanel;
+        [SerializeField] private GameObject successContent;
+        [SerializeField] private GameObject failContent;
         [SerializeField] private Button playButton;
         [SerializeField] private Camera sceneCamera;
         [SerializeField] private HudTimerView timerView;
@@ -25,8 +27,11 @@ namespace ColorBlockJam.Gameplay
         private GameObject currentLevelInstance;
         private LevelCountdown currentCountdown;
         private BoardGridState currentBoard;
+        private GameplayInputController currentInput;
         private LevelDefinition currentLevel;
         private int currentLevelIndex;
+        private bool hasLevelResolved;
+        private bool isAwaitingExitResolution;
 
         public LevelDefinition CurrentLevel => currentLevel;
         public int CurrentLevelIndex => currentLevelIndex;
@@ -70,6 +75,8 @@ namespace ColorBlockJam.Gameplay
             currentLevelIndex = levelCatalog.ClampIndex(levelIndex);
             currentLevel = level;
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
+            hasLevelResolved = false;
+            isAwaitingExitResolution = false;
 
             SetScreenState(showMenu: false, showHud: true, showEndGame: false);
             DestroyCurrentLevel();
@@ -94,6 +101,15 @@ namespace ColorBlockJam.Gameplay
             }
             currentBoard.RemainingBlockCountChanged += HandleRemainingBlockCountChanged;
 
+            currentInput = currentLevelInstance.GetComponentInChildren<GameplayInputController>(true);
+            if (currentInput == null)
+            {
+                Debug.LogError("Level Runtime Prefab needs a GameplayInputController.", currentLevelInstance);
+                DestroyCurrentLevel();
+                return false;
+            }
+            currentInput.SetInputEnabled(true);
+
             currentCountdown = currentLevelInstance.GetComponentInChildren<LevelCountdown>();
             if (currentCountdown == null)
             {
@@ -103,7 +119,7 @@ namespace ColorBlockJam.Gameplay
             }
 
             currentCountdown.TimeChanged += UpdateTimerView;
-            currentCountdown.Expired += FailCurrentLevel;
+            currentCountdown.Expired += HandleTimerExpired;
             currentCountdown.StartCountdown(currentLevel.TimerSeconds);
 
             LevelLoaded?.Invoke(currentLevel, currentLevelIndex);
@@ -117,9 +133,12 @@ namespace ColorBlockJam.Gameplay
 
         public void CompleteCurrentLevel()
         {
+            if (hasLevelResolved) return;
+            hasLevelResolved = true;
             StopActiveCountdown();
+            SetGameplayInputEnabled(false);
             LevelProgress.UnlockThrough(currentLevelIndex + 1);
-            SetScreenState(showMenu: false, showHud: true, showEndGame: true);
+            ShowEndGame(success: true);
         }
 
         public void LoadNextLevel()
@@ -130,13 +149,17 @@ namespace ColorBlockJam.Gameplay
 
         public void FailCurrentLevel()
         {
+            if (hasLevelResolved) return;
+            hasLevelResolved = true;
             StopActiveCountdown();
-            SetScreenState(showMenu: false, showHud: true, showEndGame: true);
+            SetGameplayInputEnabled(false);
+            ShowEndGame(success: false);
         }
 
         public void ShowMainMenu()
         {
             StopActiveCountdown();
+            SetGameplayInputEnabled(false);
             DestroyCurrentLevel();
             SetScreenState(showMenu: true, showHud: false, showEndGame: false);
         }
@@ -146,6 +169,7 @@ namespace ColorBlockJam.Gameplay
             StopActiveCountdown();
             UnbindCountdown();
             UnbindBoard();
+            currentInput = null;
             if (currentLevelInstance == null) return;
             currentLevelInstance.SetActive(false);
             Destroy(currentLevelInstance);
@@ -161,7 +185,7 @@ namespace ColorBlockJam.Gameplay
         {
             if (currentCountdown == null) return;
             currentCountdown.TimeChanged -= UpdateTimerView;
-            currentCountdown.Expired -= FailCurrentLevel;
+            currentCountdown.Expired -= HandleTimerExpired;
             currentCountdown = null;
         }
 
@@ -174,7 +198,38 @@ namespace ColorBlockJam.Gameplay
 
         private void HandleRemainingBlockCountChanged(int remainingBlockCount)
         {
-            if (remainingBlockCount == 0) CompleteCurrentLevel();
+            if (remainingBlockCount == 0)
+            {
+                CompleteCurrentLevel();
+                return;
+            }
+
+            if (isAwaitingExitResolution && !currentBoard.HasBlocksExiting)
+                FailCurrentLevel();
+        }
+
+        private void HandleTimerExpired()
+        {
+            SetGameplayInputEnabled(false);
+            if (currentBoard == null || !currentBoard.HasBlocksExiting)
+            {
+                FailCurrentLevel();
+                return;
+            }
+
+            isAwaitingExitResolution = true;
+        }
+
+        private void SetGameplayInputEnabled(bool enabled)
+        {
+            if (currentInput != null) currentInput.SetInputEnabled(enabled);
+        }
+
+        private void ShowEndGame(bool success)
+        {
+            if (successContent != null) successContent.SetActive(success);
+            if (failContent != null) failContent.SetActive(!success);
+            SetScreenState(showMenu: false, showHud: true, showEndGame: true);
         }
 
         private void UpdateTimerView(int seconds)

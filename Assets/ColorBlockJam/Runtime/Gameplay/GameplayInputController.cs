@@ -19,8 +19,10 @@ namespace ColorBlockJam.Gameplay
         private Vector3 dragStartPointerWorld;
         private Vector3 dragStartLocalPosition;
         private Vector2 acceptedOffset;
+        private bool inputEnabled = true;
 
         public GameObject SelectedObject => selectedObject;
+        public bool IsInputEnabled => inputEnabled;
 
         private void Awake()
         {
@@ -29,11 +31,32 @@ namespace ColorBlockJam.Gameplay
 
         private void Update()
         {
-            if (inputCamera == null) return;
+            if (!inputEnabled || inputCamera == null) return;
 
             if (TryGetPointerDown(out Vector2 screenPosition)) BeginDrag(screenPosition);
             if (selectedBlock != null && TryGetPointerHeld(out screenPosition)) Drag(screenPosition);
             if (selectedBlock != null && TryGetPointerUp()) EndDrag();
+        }
+
+        public void SetInputEnabled(bool enabled)
+        {
+            if (inputEnabled == enabled) return;
+            inputEnabled = enabled;
+            if (!inputEnabled) CancelActiveDrag();
+        }
+
+        private void CancelActiveDrag()
+        {
+            if (selectedBlock == null) return;
+
+            if (selectedBlock.State == BlockMovementState.Dragging)
+            {
+                selectedBlock.transform.localPosition = dragStartLocalPosition;
+                selectedBlock.CancelDrag();
+            }
+
+            selectedBlock = null;
+            selectedObject = null;
         }
 
         private void BeginDrag(Vector2 screenPosition)

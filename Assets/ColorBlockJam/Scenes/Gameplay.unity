@@ -1099,8 +1099,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ba3e490d8a34c65bfe216c914e0a785, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   valueLabel: {fileID: 1976946543}
 --- !u!1 &665535056
 GameObject:
@@ -4300,6 +4300,8 @@ MonoBehaviour:
   mainMenuPanel: {fileID: 1577603389}
   gameplayHud: {fileID: 1610997195}
   endGamePanel: {fileID: 1494660121}
+  successContent: {fileID: 1459349593}
+  failContent: {fileID: 1236796101}
   playButton: {fileID: 1194473097}
   sceneCamera: {fileID: 92934064}
   timerView: {fileID: 639566600}
@@ -4628,7 +4630,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1880796437
 RectTransform:
   m_ObjectHideFlags: 0
