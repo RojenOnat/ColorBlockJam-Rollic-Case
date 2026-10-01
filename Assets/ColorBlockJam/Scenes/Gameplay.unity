@@ -1098,7 +1098,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 639566598}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e0d8a4c9b24617b035eafe8d314c72, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ba3e490d8a34c65bfe216c914e0a785, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   valueLabel: {fileID: 1976946543}
@@ -4302,7 +4302,7 @@ MonoBehaviour:
   endGamePanel: {fileID: 1494660121}
   playButton: {fileID: 1194473097}
   sceneCamera: {fileID: 92934064}
-  levelTimer: {fileID: 639566600}
+  timerView: {fileID: 639566600}
 --- !u!1 &1706725692
 GameObject:
   m_ObjectHideFlags: 0

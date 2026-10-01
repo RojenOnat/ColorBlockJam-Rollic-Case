@@ -1,48 +1,45 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ColorBlockJam.Gameplay
 {
     /// <summary>
-    /// Displays and counts down the active level's duration.
-    /// The timer owns no game-state decisions; listeners decide what expiry means.
+    /// Runtime-only countdown for one instantiated level. It is destroyed with the level.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class LevelTimer : MonoBehaviour
+    public sealed class LevelCountdown : MonoBehaviour
     {
-        [SerializeField] private Text valueLabel;
-
         private float remainingSeconds;
         private bool isRunning;
         private bool hasExpired;
 
-        public float RemainingSeconds => remainingSeconds;
+        public int DisplaySeconds => Mathf.CeilToInt(remainingSeconds);
         public bool IsRunning => isRunning;
+
+        public event Action<int> TimeChanged;
         public event Action Expired;
 
         public void StartCountdown(int seconds)
         {
             remainingSeconds = Mathf.Max(0, seconds);
-            hasExpired = false;
             isRunning = remainingSeconds > 0f;
-            RefreshLabel();
+            hasExpired = false;
+            NotifyTimeChanged();
 
             if (!isRunning)
                 RaiseExpired();
         }
 
-        public void StopCountdown()
-        {
-            isRunning = false;
-        }
+        public void StopCountdown() => isRunning = false;
 
         private void Update()
         {
             if (!isRunning) return;
 
+            int displayedBeforeTick = DisplaySeconds;
             remainingSeconds = Mathf.Max(0f, remainingSeconds - Time.deltaTime);
-            RefreshLabel();
+            if (DisplaySeconds != displayedBeforeTick)
+                NotifyTimeChanged();
 
             if (remainingSeconds <= 0f)
             {
@@ -51,21 +48,13 @@ namespace ColorBlockJam.Gameplay
             }
         }
 
+        private void NotifyTimeChanged() => TimeChanged?.Invoke(DisplaySeconds);
+
         private void RaiseExpired()
         {
             if (hasExpired) return;
             hasExpired = true;
             Expired?.Invoke();
-        }
-
-        private void RefreshLabel()
-        {
-            if (valueLabel == null) return;
-
-            int wholeSeconds = Mathf.CeilToInt(remainingSeconds);
-            int minutes = wholeSeconds / 60;
-            int seconds = wholeSeconds % 60;
-            valueLabel.text = $"{minutes:00}:{seconds:00}";
         }
     }
 }
