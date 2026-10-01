@@ -24,6 +24,7 @@ namespace ColorBlockJam.Gameplay
 
         private GameObject currentLevelInstance;
         private LevelCountdown currentCountdown;
+        private BoardGridState currentBoard;
         private LevelDefinition currentLevel;
         private int currentLevelIndex;
 
@@ -49,6 +50,7 @@ namespace ColorBlockJam.Gameplay
         {
             if (playButton != null) playButton.onClick.RemoveListener(StartCurrentLevel);
             UnbindCountdown();
+            UnbindBoard();
         }
 
         public void StartCurrentLevel()
@@ -83,6 +85,15 @@ namespace ColorBlockJam.Gameplay
             }
             boardBuilder.Configure(currentLevel, visualSettings);
             boardBuilder.Rebuild();
+            currentBoard = currentLevelInstance.GetComponentInChildren<BoardGridState>();
+            if (currentBoard == null)
+            {
+                Debug.LogError("Level Runtime Prefab could not build a BoardGridState.", currentLevelInstance);
+                DestroyCurrentLevel();
+                return false;
+            }
+            currentBoard.RemainingBlockCountChanged += HandleRemainingBlockCountChanged;
+
             currentCountdown = currentLevelInstance.GetComponentInChildren<LevelCountdown>();
             if (currentCountdown == null)
             {
@@ -134,6 +145,7 @@ namespace ColorBlockJam.Gameplay
         {
             StopActiveCountdown();
             UnbindCountdown();
+            UnbindBoard();
             if (currentLevelInstance == null) return;
             currentLevelInstance.SetActive(false);
             Destroy(currentLevelInstance);
@@ -151,6 +163,18 @@ namespace ColorBlockJam.Gameplay
             currentCountdown.TimeChanged -= UpdateTimerView;
             currentCountdown.Expired -= FailCurrentLevel;
             currentCountdown = null;
+        }
+
+        private void UnbindBoard()
+        {
+            if (currentBoard == null) return;
+            currentBoard.RemainingBlockCountChanged -= HandleRemainingBlockCountChanged;
+            currentBoard = null;
+        }
+
+        private void HandleRemainingBlockCountChanged(int remainingBlockCount)
+        {
+            if (remainingBlockCount == 0) CompleteCurrentLevel();
         }
 
         private void UpdateTimerView(int seconds)
