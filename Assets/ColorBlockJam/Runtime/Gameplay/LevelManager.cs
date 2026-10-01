@@ -1,6 +1,7 @@
 using System;
 using ColorBlockJam.Board;
 using ColorBlockJam.Levels;
+using ColorBlockJam.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,6 +24,7 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private Button playButton;
         [SerializeField] private Camera sceneCamera;
         [SerializeField] private HudTimerView timerView;
+        [SerializeField] private LevelPathView levelPathView;
 
         [Header("Navigation Buttons")]
         [SerializeField] private Button retryButton;
@@ -58,6 +60,7 @@ namespace ColorBlockJam.Gameplay
             currentLevelIndex = levelCatalog != null
                 ? levelCatalog.ClampIndex(LevelProgress.CurrentLevelIndex)
                 : 0;
+            levelPathView?.Refresh(currentLevelIndex);
             ShowMainMenu();
         }
 
@@ -89,6 +92,7 @@ namespace ColorBlockJam.Gameplay
             currentLevelIndex = levelCatalog.ClampIndex(levelIndex);
             currentLevel = level;
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
+            levelPathView?.Refresh(currentLevelIndex);
             hasLevelResolved = false;
             isAwaitingExitResolution = false;
 
@@ -176,6 +180,7 @@ namespace ColorBlockJam.Gameplay
             StopActiveCountdown();
             SetGameplayInputEnabled(false);
             DestroyCurrentLevel();
+            levelPathView?.Refresh(currentLevelIndex);
             SetScreenState(showMenu: true, showHud: false, showEndGame: false);
         }
 

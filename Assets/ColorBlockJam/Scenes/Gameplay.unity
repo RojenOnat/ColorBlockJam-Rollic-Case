@@ -1265,6 +1265,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 686624391}
+  - component: {fileID: 686624392}
   m_Layer: 0
   m_Name: LevelPath
   m_TagString: Untagged
@@ -1296,6 +1297,22 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 291}
   m_SizeDelta: {x: 700, y: 1300}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &686624392
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 686624390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d9e1a6c2b7840e18f53a967bc1d025f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  currentLevelLabel: {fileID: 1023121006}
+  upcomingLevelLabels:
+  - {fileID: 552656165}
+  - {fileID: 2012248205}
 --- !u!1 &780570068
 GameObject:
   m_ObjectHideFlags: 0
@@ -4305,6 +4322,7 @@ MonoBehaviour:
   playButton: {fileID: 1194473097}
   sceneCamera: {fileID: 92934064}
   timerView: {fileID: 639566600}
+  levelPathView: {fileID: 686624392}
   retryButton: {fileID: 7065650}
   failHomeButton: {fileID: 1074848518}
   successHomeButton: {fileID: 1612964868}
