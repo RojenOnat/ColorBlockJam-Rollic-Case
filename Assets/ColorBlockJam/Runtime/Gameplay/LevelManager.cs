@@ -24,6 +24,12 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private Camera sceneCamera;
         [SerializeField] private HudTimerView timerView;
 
+        [Header("Navigation Buttons")]
+        [SerializeField] private Button retryButton;
+        [SerializeField] private Button failHomeButton;
+        [SerializeField] private Button successHomeButton;
+        [SerializeField] private Button nextLevelButton;
+
         private GameObject currentLevelInstance;
         private LevelCountdown currentCountdown;
         private BoardGridState currentBoard;
@@ -40,6 +46,10 @@ namespace ColorBlockJam.Gameplay
         private void Awake()
         {
             if (playButton != null) playButton.onClick.AddListener(StartCurrentLevel);
+            if (retryButton != null) retryButton.onClick.AddListener(RestartCurrentLevel);
+            if (failHomeButton != null) failHomeButton.onClick.AddListener(ShowMainMenu);
+            if (successHomeButton != null) successHomeButton.onClick.AddListener(ShowMainMenu);
+            if (nextLevelButton != null) nextLevelButton.onClick.AddListener(LoadNextLevel);
             if (sceneCamera != null) sceneCamera.gameObject.SetActive(false);
         }
 
@@ -54,6 +64,10 @@ namespace ColorBlockJam.Gameplay
         private void OnDestroy()
         {
             if (playButton != null) playButton.onClick.RemoveListener(StartCurrentLevel);
+            if (retryButton != null) retryButton.onClick.RemoveListener(RestartCurrentLevel);
+            if (failHomeButton != null) failHomeButton.onClick.RemoveListener(ShowMainMenu);
+            if (successHomeButton != null) successHomeButton.onClick.RemoveListener(ShowMainMenu);
+            if (nextLevelButton != null) nextLevelButton.onClick.RemoveListener(LoadNextLevel);
             UnbindCountdown();
             UnbindBoard();
         }
@@ -128,6 +142,7 @@ namespace ColorBlockJam.Gameplay
 
         public void RestartCurrentLevel()
         {
+            if (levelCatalog == null || levelCatalog.Count == 0) return;
             StartLevel(currentLevelIndex);
         }
 

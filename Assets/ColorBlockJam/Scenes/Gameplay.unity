@@ -4305,6 +4305,10 @@ MonoBehaviour:
   playButton: {fileID: 1194473097}
   sceneCamera: {fileID: 92934064}
   timerView: {fileID: 639566600}
+  retryButton: {fileID: 7065650}
+  failHomeButton: {fileID: 1074848518}
+  successHomeButton: {fileID: 1612964868}
+  nextLevelButton: {fileID: 1275216197}
 --- !u!1 &1706725692
 GameObject:
   m_ObjectHideFlags: 0
