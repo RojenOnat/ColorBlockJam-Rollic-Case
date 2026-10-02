@@ -62,7 +62,7 @@ namespace ColorBlockJam.Gameplay
         private void Start()
         {
             currentLevelIndex = levelManager != null ? levelManager.CurrentLevelIndex : 0;
-            levelPathView?.Refresh(currentLevelIndex);
+            RefreshLevelPath();
             ShowMainMenu();
         }
 
@@ -89,7 +89,7 @@ namespace ColorBlockJam.Gameplay
             UnbindSession();
             levelManager?.UnloadCurrentLevel();
             currentLevelIndex = levelManager != null ? levelManager.CurrentLevelIndex : currentLevelIndex;
-            levelPathView?.Refresh(currentLevelIndex);
+            RefreshLevelPath();
             goldView?.Refresh();
             SetScreenState(showMenu: true, showHud: false, showEndGame: false);
         }
@@ -106,7 +106,7 @@ namespace ColorBlockJam.Gameplay
             currentSession.Failed += HandleLevelFailed;
             currentSession.PauseChanged += HandlePauseChanged;
 
-            levelPathView?.Refresh(currentLevelIndex);
+            RefreshLevelPath();
             levelView?.SetLevelNumber(currentLevelIndex + 1);
             goldView?.Refresh();
             rewardView?.SetReward(currentLevel.RewardGold);
@@ -122,12 +122,18 @@ namespace ColorBlockJam.Gameplay
         private void HandleLevelCompleted()
         {
             LevelProgress.UnlockThrough(currentLevelIndex + 1);
+            levelManager?.SaveFollowingLevelSelection();
             GoldWallet.Add(currentLevel != null ? currentLevel.RewardGold : 0);
             goldView?.Refresh();
             pendingSuccessPresentation = StartCoroutine(ShowSuccessAfterDelay());
         }
 
         private void HandleLevelFailed() => ShowEndGame(success: false);
+
+        private void RefreshLevelPath()
+        {
+            levelPathView?.Refresh(currentLevelIndex);
+        }
 
         private IEnumerator ShowSuccessAfterDelay()
         {

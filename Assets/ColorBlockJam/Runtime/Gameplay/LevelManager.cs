@@ -23,7 +23,7 @@ namespace ColorBlockJam.Gameplay
         public LevelDefinition CurrentLevel => currentLevel;
         public int CurrentLevelIndex => currentLevelIndex;
         public LevelSessionController CurrentSession => currentSession;
-        public bool HasActiveLevel => currentRuntime != null;
+        public bool HasActiveLevel => currentRuntime != null && currentRuntime.Root != null;
 
         public event Action<LevelDefinition, int, LevelSessionController> LevelStarted;
         public event Action LevelUnloaded;
@@ -31,9 +31,7 @@ namespace ColorBlockJam.Gameplay
         private void Awake()
         {
             runtimeFactory = new LevelRuntimeFactory(levelRuntimePrefab, visualSettings);
-            currentLevelIndex = levelCatalog != null
-                ? levelCatalog.ClampIndex(LevelProgress.CurrentLevelIndex)
-                : 0;
+            currentLevelIndex = LevelProgress.CurrentLevelIndex;
         }
 
         private void OnDestroy() => UnloadCurrentLevel();
@@ -42,12 +40,13 @@ namespace ColorBlockJam.Gameplay
 
         public bool StartLevel(int levelIndex)
         {
-            if (!TryGetLevel(levelIndex, out int resolvedIndex, out LevelDefinition level)) return false;
+            int progressionIndex = Mathf.Max(0, levelIndex);
+            if (!TryGetLevel(progressionIndex, out LevelDefinition level)) return false;
 
             UnloadCurrentLevel();
-            if (!runtimeFactory.TryCreate(level, resolvedIndex + 1, out LevelRuntimeContext runtime)) return false;
+            if (!runtimeFactory.TryCreate(level, progressionIndex + 1, out LevelRuntimeContext runtime)) return false;
 
-            currentLevelIndex = resolvedIndex;
+            currentLevelIndex = progressionIndex;
             currentLevel = level;
             currentRuntime = runtime;
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
@@ -64,25 +63,40 @@ namespace ColorBlockJam.Gameplay
         public bool LoadNextLevel()
         {
             if (levelCatalog == null || levelCatalog.Count == 0) return false;
-            return StartLevel(Mathf.Min(currentLevelIndex + 1, levelCatalog.Count - 1));
+            return StartLevel(currentLevelIndex + 1);
+        }
+
+        public void SaveFollowingLevelSelection()
+        {
+            if (levelCatalog == null || levelCatalog.Count == 0) return;
+            LevelProgress.CurrentLevelIndex = currentLevelIndex + 1;
         }
 
         public void UnloadCurrentLevel()
         {
             if (currentRuntime == null) return;
 
-            currentSession?.Shutdown();
-            LevelUnloaded?.Invoke();
-            currentRuntime.Root.SetActive(false);
-            Destroy(currentRuntime.Root);
+            LevelRuntimeContext runtimeToUnload = currentRuntime;
+            LevelSessionController sessionToShutdown = currentSession;
             currentRuntime = null;
             currentSession = null;
             currentLevel = null;
+
+            if (sessionToShutdown != null) sessionToShutdown.Shutdown();
+            LevelUnloaded?.Invoke();
+
+            GameObject root = runtimeToUnload.Root;
+            if (root != null)
+            {
+                root.SetActive(false);
+                Destroy(root);
+            }
+
+            currentLevelIndex = LevelProgress.CurrentLevelIndex;
         }
 
-        private bool TryGetLevel(int requestedIndex, out int resolvedIndex, out LevelDefinition level)
+        private bool TryGetLevel(int progressionIndex, out LevelDefinition level)
         {
-            resolvedIndex = 0;
             level = null;
             if (levelCatalog == null || visualSettings == null || levelRuntimePrefab == null)
             {
@@ -90,10 +104,10 @@ namespace ColorBlockJam.Gameplay
                 return false;
             }
 
-            resolvedIndex = levelCatalog.ClampIndex(requestedIndex);
-            if (levelCatalog.TryGet(resolvedIndex, out level)) return true;
+            int dataIndex = levelCatalog.WrapIndex(progressionIndex);
+            if (levelCatalog.TryGet(dataIndex, out level)) return true;
 
-            Debug.LogError($"No level exists at catalog index {resolvedIndex}.", this);
+            Debug.LogError($"No level exists at catalog index {dataIndex}.", this);
             return false;
         }
     }

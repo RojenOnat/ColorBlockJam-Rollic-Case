@@ -2,6 +2,10 @@
 
 A portrait Unity vertical slice built for the Rollic Game Developer Case. The repository contains five playable levels, a data-driven runtime flow, persistent progression and coins, and a visual level editor intended for non-technical level designers.
 
+## Project documentation
+
+The illustrated [Color Block Jam Case Study](Documentation/ColorBlockJam_Case_Study.pdf) presents the gameplay loop, UI flow, runtime architecture, level-authoring workflow, feature tools, validation, tuning, and delivery setup.
+
 ## Requirements
 
 - Unity **2022.3.62f2**

@@ -25,6 +25,12 @@ namespace ColorBlockJam.Levels
 
         public int ClampIndex(int index) => Mathf.Clamp(index, 0, Mathf.Max(0, levels.Count - 1));
 
+        public int WrapIndex(int index)
+        {
+            if (levels.Count == 0) return 0;
+            return (index % levels.Count + levels.Count) % levels.Count;
+        }
+
         public bool SetLevels(IReadOnlyList<LevelDefinition> source)
         {
             if (source == null) return false;

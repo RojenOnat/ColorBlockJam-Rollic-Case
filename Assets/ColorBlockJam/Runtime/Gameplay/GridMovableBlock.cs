@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ColorBlockJam.Configuration;
 using UnityEngine;
 
 namespace ColorBlockJam.Gameplay
@@ -20,6 +21,8 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private BlockExitMotor exitMotor;
         [SerializeField] private BlockFeatureController featureController;
         [SerializeField] private IceLockFeature iceLock;
+
+        private const float MovementComparisonEpsilon = 0.0001f;
 
         private readonly List<Vector2Int> previousCells = new List<Vector2Int>();
         private Transform exitPivot;
@@ -130,8 +133,46 @@ namespace ColorBlockJam.Gameplay
         public Vector2 ResolveDragOffset(Vector2 current, Vector2 target)
         {
             target = featureController.FilterDragTarget(current, target);
-            current = MoveAlongAxis(current, target.x, true);
-            return MoveAlongAxis(current, target.y, false);
+            Vector2 horizontalFirst = MoveAlongAxis(current, target.x, true);
+            horizontalFirst = MoveAlongAxis(horizontalFirst, target.y, false);
+
+            Vector2 assisted = TryAlignForVerticalCorridor(horizontalFirst, target);
+            assisted = TryAlignForHorizontalCorridor(assisted, target);
+            return assisted;
+        }
+
+        private Vector2 TryAlignForVerticalCorridor(Vector2 current, Vector2 target)
+        {
+            if (Mathf.Abs(target.y - current.y) <= MovementComparisonEpsilon) return current;
+
+            float alignedX = Mathf.Round(target.x);
+            if (Mathf.Abs(alignedX - target.x) > GameTuning.Current.CorridorAlignmentDistance) return current;
+
+            Vector2 aligned = MoveAlongAxis(current, alignedX, true);
+            if (Mathf.Abs(aligned.x - alignedX) > MovementComparisonEpsilon) return current;
+
+            Vector2 candidate = MoveAlongAxis(aligned, target.y, false);
+            return Mathf.Abs(candidate.y - target.y) + MovementComparisonEpsilon <
+                   Mathf.Abs(current.y - target.y)
+                ? candidate
+                : current;
+        }
+
+        private Vector2 TryAlignForHorizontalCorridor(Vector2 current, Vector2 target)
+        {
+            if (Mathf.Abs(target.x - current.x) <= MovementComparisonEpsilon) return current;
+
+            float alignedY = Mathf.Round(target.y);
+            if (Mathf.Abs(alignedY - target.y) > GameTuning.Current.CorridorAlignmentDistance) return current;
+
+            Vector2 aligned = MoveAlongAxis(current, alignedY, false);
+            if (Mathf.Abs(aligned.y - alignedY) > MovementComparisonEpsilon) return current;
+
+            Vector2 candidate = MoveAlongAxis(aligned, target.x, true);
+            return Mathf.Abs(candidate.x - target.x) + MovementComparisonEpsilon <
+                   Mathf.Abs(current.x - target.x)
+                ? candidate
+                : current;
         }
 
         private Vector2 MoveAlongAxis(Vector2 current, float target, bool horizontal)

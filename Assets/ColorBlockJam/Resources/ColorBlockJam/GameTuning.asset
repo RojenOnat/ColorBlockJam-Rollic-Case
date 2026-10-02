@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: ColorBlockJam.Runtime::ColorBlockJam.Configuration.GameTuning
   dragLiftHeight: 0.5
   dragSensitivity: 1
-  exitCollapseSpeed: 10
+  corridorAlignmentDistance: 0.35
+  exitCollapseSpeed: 15
   successPanelDelay: 0.5

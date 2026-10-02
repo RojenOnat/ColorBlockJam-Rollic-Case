@@ -12,6 +12,7 @@ namespace ColorBlockJam.Configuration
         [Header("Block Drag")]
         [SerializeField, Range(0f, 2f)] private float dragLiftHeight = 0.5f;
         [SerializeField, Range(0.25f, 2f)] private float dragSensitivity = 1f;
+        [SerializeField, Range(0f, 0.49f)] private float corridorAlignmentDistance = 0.35f;
 
         [Header("Block Exit")]
         [SerializeField, Range(1f, 30f)] private float exitCollapseSpeed = 12.5f;
@@ -21,6 +22,7 @@ namespace ColorBlockJam.Configuration
 
         public float DragLiftHeight => dragLiftHeight;
         public float DragSensitivity => dragSensitivity;
+        public float CorridorAlignmentDistance => corridorAlignmentDistance;
         public float ExitCollapseSpeed => exitCollapseSpeed;
         public float SuccessPanelDelay => successPanelDelay;
 
