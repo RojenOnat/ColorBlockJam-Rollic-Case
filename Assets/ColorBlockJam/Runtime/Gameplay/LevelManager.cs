@@ -32,6 +32,9 @@ namespace ColorBlockJam.Gameplay
         {
             runtimeFactory = new LevelRuntimeFactory(levelRuntimePrefab, visualSettings);
             currentLevelIndex = LevelProgress.CurrentLevelIndex;
+
+            // Keep gameplay presentation consistent across supported mobile devices.
+            Application.targetFrameRate = 60;
         }
 
         private void OnDestroy() => UnloadCurrentLevel();
