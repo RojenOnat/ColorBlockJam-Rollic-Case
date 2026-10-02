@@ -366,7 +366,6 @@ namespace ColorBlockJam.Board
                 IceLockFeature iceLock = group.gameObject.AddComponent<IceLockFeature>();
                 iceLock.Configure(board, seed.Features, visualSettings, seed.Color);
                 movableBlock.Configure(board, occupiedCells, seed.Features);
-                AddSelectionCollider(group);
                 CreateDirectionFeatureVisual(group, component, seed.Features.MovementMode);
 
             }
@@ -416,23 +415,6 @@ namespace ColorBlockJam.Board
             int activeIndex = Mathf.Clamp(span - 1, 0, variants.childCount - 1);
             for (int i = 0; i < variants.childCount; i++)
                 variants.GetChild(i).gameObject.SetActive(i == activeIndex);
-        }
-
-        private static void AddSelectionCollider(Transform group)
-        {
-            Renderer[] renderers = group.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0) return;
-
-            Bounds bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
-
-            BoxCollider collider = group.gameObject.AddComponent<BoxCollider>();
-            collider.center = group.InverseTransformPoint(bounds.center);
-            Vector3 scale = group.lossyScale;
-            collider.size = new Vector3(
-                bounds.size.x / Mathf.Max(Mathf.Abs(scale.x), 0.0001f),
-                bounds.size.y / Mathf.Max(Mathf.Abs(scale.y), 0.0001f),
-                bounds.size.z / Mathf.Max(Mathf.Abs(scale.z), 0.0001f));
         }
 
         private HashSet<BlockDefinition> CollectConnectedBlock(BlockDefinition seed,

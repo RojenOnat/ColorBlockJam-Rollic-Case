@@ -22,6 +22,7 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private IceLockFeature iceLock;
 
         private readonly List<Vector2Int> previousCells = new List<Vector2Int>();
+        private Transform exitPivot;
 
         public IReadOnlyList<Vector2Int> Cells => cells;
         public BoardGridState Board => board;
@@ -72,15 +73,32 @@ namespace ColorBlockJam.Gameplay
             board.ReleaseCells(this);
             transform.localPosition = alignedLocalPosition;
             state = BlockMovementState.Exiting;
-            float distance = board.CellSize * (GetDepthAlong(gate.ExitDirection) + 2f);
-            exitMotor.Play(gate.ExitDirection, distance, CompleteExit);
+            board.NotifyBlockExitStarted(this);
+            float collapseDistance = board.CellSize * GetDepthAlong(gate.ExitDirection);
+            float collapseHalfExtent = board.CellSize * GetDepthAlong(gate.ExitDirection) * 0.5f;
+            exitPivot = CreateExitPivot(gate.ExitDirection, collapseHalfExtent);
+            exitMotor.Play(exitPivot, gate.ExitDirection, collapseDistance, CompleteExit);
         }
 
         private void CompleteExit()
         {
             state = BlockMovementState.Completed;
             board.NotifyBlockCompleted(this);
-            Destroy(gameObject);
+            Destroy(exitPivot != null ? exitPivot.gameObject : gameObject);
+        }
+
+        private Transform CreateExitPivot(Vector2Int exitDirection, float halfExtent)
+        {
+            Transform originalParent = transform.parent;
+            var pivotObject = new GameObject("ExitPivot");
+            Transform pivot = pivotObject.transform;
+            pivot.SetParent(originalParent, false);
+            pivot.localPosition = transform.localPosition +
+                                  new Vector3(exitDirection.x * halfExtent, 0f, exitDirection.y * halfExtent);
+            pivot.localRotation = transform.localRotation;
+            pivot.localScale = transform.localScale;
+            transform.SetParent(pivot, true);
+            return pivot;
         }
 
         private int GetDepthAlong(Vector2Int direction)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ColorBlockJam.Configuration;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -9,9 +10,7 @@ namespace ColorBlockJam.Gameplay
     public sealed class GameplayInputController : MonoBehaviour
     {
         [SerializeField] private Camera inputCamera;
-        [SerializeField] private LayerMask clickableLayerMask = ~0;
-        [SerializeField, Min(1f)] private float rayDistance = 1000f;
-        [SerializeField, Min(0f)] private float liftHeight = 0.5f;
+        [SerializeField] private BoardGridState board;
         [SerializeField] private GameObject selectedObject;
 
         private readonly List<Vector2Int> candidateCells = new List<Vector2Int>();
@@ -45,6 +44,11 @@ namespace ColorBlockJam.Gameplay
             if (!inputEnabled) CancelActiveDrag();
         }
 
+        public void Configure(BoardGridState boardState)
+        {
+            board = boardState;
+        }
+
         private void CancelActiveDrag()
         {
             if (selectedBlock == null) return;
@@ -63,53 +67,42 @@ namespace ColorBlockJam.Gameplay
         {
             selectedBlock = null;
 
-            Ray ray = inputCamera.ScreenPointToRay(screenPosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, clickableLayerMask,
-                    QueryTriggerInteraction.Collide))
-            {
-                selectedBlock = hit.collider.GetComponentInParent<GridMovableBlock>();
-                selectedObject = selectedBlock != null ? selectedBlock.gameObject : hit.collider.gameObject;
-                Debug.Log($"Clicked Object: {selectedObject.name}", selectedObject);
-
-                if (selectedBlock == null || !TryPointerOnBoard(screenPosition, out dragStartPointerWorld))
-                {
-                    selectedBlock = null;
-                    return;
-                }
-
-                if (!selectedBlock.BeginDrag())
-                {
-                    selectedBlock = null;
-                    selectedObject = null;
-                    return;
-                }
-
-                dragStartLocalPosition = selectedBlock.transform.localPosition;
-                acceptedOffset = Vector2.zero;
-                Vector3 lifted = dragStartLocalPosition;
-                lifted.y += liftHeight;
-                selectedBlock.transform.localPosition = lifted;
-            }
-            else
+            if (board == null || !TryPointerOnBoard(screenPosition, board, out dragStartPointerWorld) ||
+                !board.TryGetBlockAtBoardPoint(dragStartPointerWorld, out selectedBlock))
             {
                 selectedObject = null;
-                Debug.Log("Clicked Object: null", this);
+                return;
             }
+
+            selectedObject = selectedBlock.gameObject;
+            if (!selectedBlock.BeginDrag())
+            {
+                selectedObject = null;
+                selectedBlock = null;
+                return;
+            }
+
+            dragStartLocalPosition = selectedBlock.transform.localPosition;
+            acceptedOffset = Vector2.zero;
+            Vector3 lifted = dragStartLocalPosition;
+            lifted.y += GameTuning.Current.DragLiftHeight;
+            selectedBlock.transform.localPosition = lifted;
         }
 
         private void Drag(Vector2 screenPosition)
         {
-            if (!TryPointerOnBoard(screenPosition, out Vector3 pointerWorld)) return;
+            if (!TryPointerOnBoard(screenPosition, selectedBlock.Board, out Vector3 pointerWorld)) return;
 
             Vector3 worldDelta = pointerWorld - dragStartPointerWorld;
             Vector3 localDelta = selectedBlock.Board.transform.InverseTransformVector(worldDelta);
             float cellSize = selectedBlock.Board.CellSize;
-            var requestedOffset = new Vector2(localDelta.x / cellSize, localDelta.z / cellSize);
+            var requestedOffset = new Vector2(localDelta.x / cellSize, localDelta.z / cellSize) *
+                                  GameTuning.Current.DragSensitivity;
             if (TryBeginExit(requestedOffset, cellSize)) return;
 
             acceptedOffset = selectedBlock.ResolveDragOffset(acceptedOffset, requestedOffset);
             Vector3 position = dragStartLocalPosition +
-                               new Vector3(acceptedOffset.x * cellSize, liftHeight,
+                               new Vector3(acceptedOffset.x * cellSize, GameTuning.Current.DragLiftHeight,
                                    acceptedOffset.y * cellSize);
             selectedBlock.transform.localPosition = position;
         }
@@ -160,9 +153,15 @@ namespace ColorBlockJam.Gameplay
             selectedObject = null;
         }
 
-        private bool TryPointerOnBoard(Vector2 screenPosition, out Vector3 worldPosition)
+        private bool TryPointerOnBoard(Vector2 screenPosition, BoardGridState boardState, out Vector3 worldPosition)
         {
-            Transform boardTransform = selectedBlock.Board.transform;
+            if (boardState == null)
+            {
+                worldPosition = default;
+                return false;
+            }
+
+            Transform boardTransform = boardState.transform;
             var plane = new Plane(boardTransform.up, boardTransform.position);
             Ray ray = inputCamera.ScreenPointToRay(screenPosition);
             if (plane.Raycast(ray, out float distance))

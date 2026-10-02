@@ -16,8 +16,9 @@ MonoBehaviour:
   boardWidth: 8
   boardHeight: 12
   timerSeconds: 45
+  rewardGold: 20
   cameraSettings:
-    position: {x: 0, y: 16.55, z: -1.6}
+    position: {x: 0, y: 16.55, z: -0.64}
     rotation: {x: 85, y: 0, z: 0}
     fieldOfView: 68.24
   lightingSettings:

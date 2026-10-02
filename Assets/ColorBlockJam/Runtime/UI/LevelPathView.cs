@@ -4,6 +4,7 @@ using UnityEngine.UI;
 namespace ColorBlockJam.UI
 {
     /// <summary>Displays the selected level and the next entries in the home-screen level path.</summary>
+    [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class LevelPathView : MonoBehaviour
     {
@@ -12,6 +13,8 @@ namespace ColorBlockJam.UI
 
         [SerializeField] private Text currentLevelLabel;
         [SerializeField] private Text[] upcomingLevelLabels;
+
+        private void OnEnable() => ConfigurePathRail();
 
         public void Refresh(int currentLevelIndex)
         {

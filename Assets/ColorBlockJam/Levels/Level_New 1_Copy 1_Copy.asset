@@ -16,10 +16,11 @@ MonoBehaviour:
   boardWidth: 10
   boardHeight: 15
   timerSeconds: 60
+  rewardGold: 20
   cameraSettings:
-    position: {x: 0, y: 16.55, z: -1.6}
-    rotation: {x: 85, y: 0, z: 0}
-    fieldOfView: 82.9
+    position: {x: 0, y: 16.55, z: 0.32}
+    rotation: {x: 87, y: 0, z: 0}
+    fieldOfView: 75.66
   lightingSettings:
     directionalLightRotation: {x: 45, y: -35, z: 0}
   blocks:

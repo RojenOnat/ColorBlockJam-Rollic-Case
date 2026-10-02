@@ -16,6 +16,7 @@ namespace ColorBlockJam.Gameplay
         private readonly HashSet<Vector2Int> playable = new HashSet<Vector2Int>();
         private readonly List<GateGroup> gates = new List<GateGroup>();
         private readonly HashSet<GridMovableBlock> blocks = new HashSet<GridMovableBlock>();
+        private readonly HashSet<GridMovableBlock> exitingBlocks = new HashSet<GridMovableBlock>();
 
         public float CellSize => cellSize;
         public int RemainingBlockCount => blocks.Count;
@@ -23,7 +24,7 @@ namespace ColorBlockJam.Gameplay
         {
             get
             {
-                foreach (GridMovableBlock block in blocks)
+                foreach (GridMovableBlock block in exitingBlocks)
                     if (block != null && block.State == BlockMovementState.Exiting) return true;
                 return false;
             }
@@ -54,6 +55,7 @@ namespace ColorBlockJam.Gameplay
 
             occupants.Clear();
             blocks.Clear();
+            exitingBlocks.Clear();
             foreach (GridMovableBlock block in GetComponentsInChildren<GridMovableBlock>(true))
                 Register(block);
 
@@ -73,6 +75,18 @@ namespace ColorBlockJam.Gameplay
             if (gate != null && !gates.Contains(gate)) gates.Add(gate);
         }
 
+        /// <summary>
+        /// Resolves a screen-projected board point to its logical grid cell. Input uses this
+        /// instead of visual colliders, so selection always matches the tile the player touches.
+        /// </summary>
+        public bool TryGetBlockAtBoardPoint(Vector3 worldPoint, out GridMovableBlock block)
+        {
+            Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
+            int x = Mathf.RoundToInt(localPoint.x / cellSize + (width - 1) * 0.5f);
+            int y = Mathf.RoundToInt(localPoint.z / cellSize + (height - 1) * 0.5f);
+            return occupants.TryGetValue(new Vector2Int(x, y), out block) && block != null;
+        }
+
         public void ReleaseCells(GridMovableBlock block)
         {
             if (block == null) return;
@@ -83,8 +97,28 @@ namespace ColorBlockJam.Gameplay
 
         public void NotifyBlockCompleted(GridMovableBlock block)
         {
-            if (block == null || !blocks.Remove(block)) return;
+            if (block == null) return;
+
+            if (exitingBlocks.Remove(block))
+            {
+                BlockExited?.Invoke(block);
+                return;
+            }
+
+            if (!blocks.Remove(block)) return;
             BlockExited?.Invoke(block);
+            RemainingBlockCountChanged?.Invoke(blocks.Count);
+        }
+
+        /// <summary>
+        /// Removes a block from the active objective as soon as its accepted gate-exit action starts.
+        /// The block remains separately tracked until its visual exit animation has finished.
+        /// </summary>
+        public void NotifyBlockExitStarted(GridMovableBlock block)
+        {
+            if (block == null || !blocks.Remove(block)) return;
+
+            exitingBlocks.Add(block);
             RemainingBlockCountChanged?.Invoke(blocks.Count);
         }
 

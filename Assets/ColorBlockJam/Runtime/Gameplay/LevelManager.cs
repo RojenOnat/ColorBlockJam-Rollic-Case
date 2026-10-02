@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using ColorBlockJam.Board;
+using ColorBlockJam.Configuration;
 using ColorBlockJam.Economy;
 using ColorBlockJam.Levels;
 using ColorBlockJam.UI;
@@ -45,6 +47,8 @@ namespace ColorBlockJam.Gameplay
         private int currentLevelIndex;
         private bool hasLevelResolved;
         private bool isAwaitingExitResolution;
+        private Coroutine pendingSuccessPresentation;
+        private Coroutine pendingTimeoutResolution;
 
         public LevelDefinition CurrentLevel => currentLevel;
         public int CurrentLevelIndex => currentLevelIndex;
@@ -97,6 +101,7 @@ namespace ColorBlockJam.Gameplay
             }
 
             currentLevelIndex = levelCatalog.ClampIndex(levelIndex);
+            CancelPendingSuccessPresentation();
             currentLevel = level;
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
             levelPathView?.Refresh(currentLevelIndex);
@@ -138,6 +143,7 @@ namespace ColorBlockJam.Gameplay
                 DestroyCurrentLevel();
                 return false;
             }
+            currentInput.Configure(currentBoard);
             currentInput.SetInputEnabled(true);
 
             currentCountdown = currentLevelInstance.GetComponentInChildren<LevelCountdown>();
@@ -166,12 +172,13 @@ namespace ColorBlockJam.Gameplay
         {
             if (hasLevelResolved) return;
             hasLevelResolved = true;
+            CancelPendingTimeoutResolution();
             StopActiveCountdown();
             SetGameplayInputEnabled(false);
             LevelProgress.UnlockThrough(currentLevelIndex + 1);
             GoldWallet.Add(currentLevel != null ? currentLevel.RewardGold : 0);
             ResolveGoldView()?.Refresh();
-            ShowEndGame(success: true);
+            pendingSuccessPresentation = StartCoroutine(ShowSuccessAfterDelay());
         }
 
         public void LoadNextLevel()
@@ -183,6 +190,8 @@ namespace ColorBlockJam.Gameplay
         public void FailCurrentLevel()
         {
             if (hasLevelResolved) return;
+            CancelPendingSuccessPresentation();
+            CancelPendingTimeoutResolution();
             hasLevelResolved = true;
             StopActiveCountdown();
             SetGameplayInputEnabled(false);
@@ -191,6 +200,8 @@ namespace ColorBlockJam.Gameplay
 
         public void ShowMainMenu()
         {
+            CancelPendingSuccessPresentation();
+            CancelPendingTimeoutResolution();
             StopActiveCountdown();
             SetGameplayInputEnabled(false);
             DestroyCurrentLevel();
@@ -200,6 +211,8 @@ namespace ColorBlockJam.Gameplay
 
         private void DestroyCurrentLevel()
         {
+            CancelPendingSuccessPresentation();
+            CancelPendingTimeoutResolution();
             StopActiveCountdown();
             UnbindCountdown();
             UnbindBoard();
@@ -244,11 +257,29 @@ namespace ColorBlockJam.Gameplay
 
         private void HandleTimerExpired()
         {
+            if (hasLevelResolved || pendingTimeoutResolution != null) return;
+
+            // Let an input release already queued for this frame begin its valid gate exit.
+            pendingTimeoutResolution = StartCoroutine(ResolveTimerExpiryAtEndOfFrame());
+        }
+
+        private IEnumerator ResolveTimerExpiryAtEndOfFrame()
+        {
+            yield return new WaitForEndOfFrame();
+            pendingTimeoutResolution = null;
+            if (hasLevelResolved) yield break;
+
+            if (currentBoard != null && currentBoard.RemainingBlockCount == 0)
+            {
+                CompleteCurrentLevel();
+                yield break;
+            }
+
             SetGameplayInputEnabled(false);
             if (currentBoard == null || !currentBoard.HasBlocksExiting)
             {
                 FailCurrentLevel();
-                return;
+                yield break;
             }
 
             isAwaitingExitResolution = true;
@@ -257,6 +288,27 @@ namespace ColorBlockJam.Gameplay
         private void SetGameplayInputEnabled(bool enabled)
         {
             if (currentInput != null) currentInput.SetInputEnabled(enabled);
+        }
+
+        private IEnumerator ShowSuccessAfterDelay()
+        {
+            yield return new WaitForSeconds(GameTuning.Current.SuccessPanelDelay);
+            pendingSuccessPresentation = null;
+            if (hasLevelResolved && currentLevelInstance != null) ShowEndGame(success: true);
+        }
+
+        private void CancelPendingSuccessPresentation()
+        {
+            if (pendingSuccessPresentation == null) return;
+            StopCoroutine(pendingSuccessPresentation);
+            pendingSuccessPresentation = null;
+        }
+
+        private void CancelPendingTimeoutResolution()
+        {
+            if (pendingTimeoutResolution == null) return;
+            StopCoroutine(pendingTimeoutResolution);
+            pendingTimeoutResolution = null;
         }
 
         private HudGoldView ResolveGoldView()
