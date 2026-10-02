@@ -1,5 +1,6 @@
 using System;
 using ColorBlockJam.Board;
+using ColorBlockJam.Economy;
 using ColorBlockJam.Levels;
 using ColorBlockJam.UI;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private Camera sceneCamera;
         [SerializeField] private HudTimerView timerView;
         [SerializeField] private HudLevelView levelView;
+        [SerializeField] private HudGoldView goldView;
+        [SerializeField] private LevelRewardView rewardView;
         [SerializeField] private LevelPathView levelPathView;
 
         [Header("Navigation Buttons")]
@@ -98,6 +101,8 @@ namespace ColorBlockJam.Gameplay
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
             levelPathView?.Refresh(currentLevelIndex);
             levelView?.SetLevelNumber(currentLevelIndex + 1);
+            ResolveGoldView()?.Refresh();
+            ResolveRewardView()?.SetReward(currentLevel.RewardGold);
             hasLevelResolved = false;
             isAwaitingExitResolution = false;
 
@@ -107,6 +112,7 @@ namespace ColorBlockJam.Gameplay
             currentLevelInstance = Instantiate(levelRuntimePrefab);
             currentLevelInstance.name = $"RuntimeLevel_{currentLevelIndex + 1:000}";
             ApplyCameraSettings(currentLevelInstance, currentLevel.CameraSettings);
+            ApplyLightingSettings(currentLevelInstance, currentLevel.LightingSettings);
             BoardPreviewGenerator boardBuilder = currentLevelInstance.GetComponentInChildren<BoardPreviewGenerator>();
             if (boardBuilder == null)
             {
@@ -163,6 +169,8 @@ namespace ColorBlockJam.Gameplay
             StopActiveCountdown();
             SetGameplayInputEnabled(false);
             LevelProgress.UnlockThrough(currentLevelIndex + 1);
+            GoldWallet.Add(currentLevel != null ? currentLevel.RewardGold : 0);
+            ResolveGoldView()?.Refresh();
             ShowEndGame(success: true);
         }
 
@@ -251,6 +259,40 @@ namespace ColorBlockJam.Gameplay
             if (currentInput != null) currentInput.SetInputEnabled(enabled);
         }
 
+        private HudGoldView ResolveGoldView()
+        {
+            if (gameplayHud == null) return null;
+
+            foreach (Text label in gameplayHud.GetComponentsInChildren<Text>(true))
+            {
+                if (label.gameObject.name != "Amount") continue;
+                if (goldView == null) goldView = label.GetComponent<HudGoldView>();
+                if (goldView == null) goldView = label.gameObject.AddComponent<HudGoldView>();
+                goldView.Bind(label);
+                return goldView;
+            }
+
+            Debug.LogError("Gameplay HUD needs an Amount Text for the gold balance.", gameplayHud);
+            return null;
+        }
+
+        private LevelRewardView ResolveRewardView()
+        {
+            if (successContent == null) return null;
+
+            foreach (Text label in successContent.GetComponentsInChildren<Text>(true))
+            {
+                if (label.gameObject.name != "RewardCoin") continue;
+                if (rewardView == null) rewardView = label.GetComponent<LevelRewardView>();
+                if (rewardView == null) rewardView = label.gameObject.AddComponent<LevelRewardView>();
+                rewardView.Bind(label);
+                return rewardView;
+            }
+
+            Debug.LogError("Success Content needs a RewardCoin Text for the level reward.", successContent);
+            return null;
+        }
+
         private static void ApplyCameraSettings(GameObject levelInstance, LevelCameraSettings settings)
         {
             if (levelInstance == null || settings == null) return;
@@ -258,6 +300,20 @@ namespace ColorBlockJam.Gameplay
             Camera levelCamera = levelInstance.GetComponentInChildren<Camera>(true);
             if (LevelCameraSettingsApplicator.Apply(levelCamera, settings)) return;
             Debug.LogError("Level Runtime Prefab needs a Camera.", levelInstance);
+        }
+
+        private static void ApplyLightingSettings(GameObject levelInstance, LevelLightingSettings settings)
+        {
+            if (levelInstance == null || settings == null) return;
+
+            foreach (Light light in levelInstance.GetComponentsInChildren<Light>(true))
+            {
+                if (light.type != LightType.Directional) continue;
+                LevelLightingSettingsApplicator.Apply(light, settings);
+                return;
+            }
+
+            Debug.LogError("Level Runtime Prefab needs a directional Light.", levelInstance);
         }
 
         private void ShowEndGame(bool success)
