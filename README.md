@@ -17,7 +17,8 @@ The illustrated [Color Block Jam Case Study](Documentation/ColorBlockJam_Case_St
 ## Submission builds
 
 - [Download the Android APK](Builds/Android/ColorBlockJam.apk)
-- [Watch the case demonstration video](Documentation/Video/ColorBlockJam_Case_Demo.mp4) — 2 minutes 36 seconds
+- [Watch the case demonstration video on Google Drive](https://drive.google.com/file/d/1vAjPWpOq0-DibCB7NbBLL2B2JQmGmXXO/view?usp=sharing) — 2 minutes 36 seconds
+- [Download the original demonstration video](Documentation/Video/ColorBlockJam_Case_Demo.mp4)
 - [Read the illustrated case study](Documentation/ColorBlockJam_Case_Study.pdf)
 
 The APK is a portrait Android build of the submitted project. The demonstration video covers the visual level editor, Home and Settings screens, gameplay, success, fail, retry, and Home navigation flows.
