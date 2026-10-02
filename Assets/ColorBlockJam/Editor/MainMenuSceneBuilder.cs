@@ -9,33 +9,8 @@ namespace ColorBlockJam.Editor
     /// <summary>Creates the editable MainMenuPanel preview from the supplied UI sprite library.</summary>
     internal static class MainMenuSceneBuilder
     {
-        private const string BuildKey = "ColorBlockJam.MainMenuSceneBuilder.v3";
         private const string UiPath = "Assets/Game Developer Case Assets/UI/";
-        private static int pendingBuildFrames;
 
-        [InitializeOnLoadMethod]
-        private static void BuildAfterCompilation()
-        {
-            if (SessionState.GetBool(BuildKey, false)) return;
-            SessionState.SetBool(BuildKey, true);
-            pendingBuildFrames = 60;
-            EditorApplication.update += BuildWhenSceneIsReady;
-        }
-
-        private static void BuildWhenSceneIsReady()
-        {
-            if (GameObject.Find("Canvas") != null && SceneManager.GetActiveScene().name == "Gameplay")
-            {
-                EditorApplication.update -= BuildWhenSceneIsReady;
-                Build();
-                return;
-            }
-
-            pendingBuildFrames--;
-            if (pendingBuildFrames <= 0) EditorApplication.update -= BuildWhenSceneIsReady;
-        }
-
-        [MenuItem("Color Block Jam/Build Main Menu Panel")]
         private static void Build()
         {
             if (SceneManager.GetActiveScene().name != "Gameplay") return;

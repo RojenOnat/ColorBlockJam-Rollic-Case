@@ -13,7 +13,6 @@ namespace ColorBlockJam.Editor
         private const string ScenePath = "Assets/ColorBlockJam/Scenes/Gameplay.unity";
         private const string UiPath = "Assets/Game Developer Case Assets/UI/";
 
-        [MenuItem("Color Block Jam/Build Gameplay HUD", priority = 20)]
         public static void Build()
         {
             var scene = File.Exists(ScenePath)
