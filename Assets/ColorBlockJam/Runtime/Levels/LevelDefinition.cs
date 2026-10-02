@@ -69,6 +69,16 @@ namespace ColorBlockJam.Levels
         }
     }
 
+    [Serializable]
+    public sealed class LevelLightingSettings
+    {
+        [SerializeField] private Vector3 directionalLightRotation = new Vector3(50f, -30f, 0f);
+
+        public Vector3 DirectionalLightRotation => directionalLightRotation;
+
+        public void SetDirectionalLightRotation(Vector3 value) => directionalLightRotation = value;
+    }
+
     public enum BoardEdge
     {
         Top,
@@ -191,12 +201,15 @@ namespace ColorBlockJam.Levels
     {
         public const int MinimumBoardSize = 3;
         public const int MaximumBoardSize = 30;
+        public const int DefaultRewardGold = 20;
 
         [SerializeField] private string displayName = "New Level";
         [SerializeField, Range(MinimumBoardSize, MaximumBoardSize)] private int boardWidth = 6;
         [SerializeField, Range(MinimumBoardSize, MaximumBoardSize)] private int boardHeight = 8;
         [SerializeField, Min(1)] private int timerSeconds = 60;
+        [SerializeField, Min(1)] private int rewardGold = DefaultRewardGold;
         [SerializeField] private LevelCameraSettings cameraSettings = new LevelCameraSettings();
+        [SerializeField] private LevelLightingSettings lightingSettings = new LevelLightingSettings();
         [SerializeField] private List<BlockDefinition> blocks = new List<BlockDefinition>();
         [SerializeField] private List<DoorDefinition> doors = new List<DoorDefinition>();
         [SerializeField] private List<WallDefinition> walls = new List<WallDefinition>();
@@ -205,12 +218,22 @@ namespace ColorBlockJam.Levels
         public int BoardWidth => boardWidth;
         public int BoardHeight => boardHeight;
         public int TimerSeconds => timerSeconds;
+        // Existing level assets predate the reward field. Treat their missing/default value as the case default.
+        public int RewardGold => Mathf.Max(DefaultRewardGold, rewardGold);
         public LevelCameraSettings CameraSettings
         {
             get
             {
                 if (cameraSettings == null) cameraSettings = new LevelCameraSettings();
                 return cameraSettings;
+            }
+        }
+        public LevelLightingSettings LightingSettings
+        {
+            get
+            {
+                if (lightingSettings == null) lightingSettings = new LevelLightingSettings();
+                return lightingSettings;
             }
         }
         public IReadOnlyList<BlockDefinition> Blocks => blocks;
@@ -226,8 +249,11 @@ namespace ColorBlockJam.Levels
         }
 
         public void SetTimer(int seconds) => timerSeconds = Mathf.Max(1, seconds);
+        public void SetRewardGold(int value) => rewardGold = Mathf.Max(1, value);
         public void SetCameraSettings(Vector3 position, Vector3 rotation, float fieldOfView) =>
             CameraSettings.Set(position, rotation, fieldOfView);
+        public void SetDirectionalLightRotation(Vector3 rotation) =>
+            LightingSettings.SetDirectionalLightRotation(rotation);
         public void AddBlock(BlockDefinition block) => blocks.Add(block);
         public void RemoveBlock(BlockDefinition block) => blocks.Remove(block);
         public void AddDoor(DoorDefinition door) => doors.Add(door);

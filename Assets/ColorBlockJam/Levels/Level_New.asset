@@ -17,9 +17,11 @@ MonoBehaviour:
   boardHeight: 10
   timerSeconds: 60
   cameraSettings:
-    position: {x: 0, y: 7.5, z: -9}
-    rotation: {x: 42, y: 0, z: 0}
+    position: {x: 0, y: 15.8, z: -1}
+    rotation: {x: 85, y: 0, z: 0}
     fieldOfView: 60
+  lightingSettings:
+    directionalLightRotation: {x: 45, y: -35, z: 0}
   blocks:
   - id: Block_be92627e3c5145cd8bc38b30e9706132
     color: 0

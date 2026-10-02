@@ -559,19 +559,26 @@ namespace ColorBlockJam.Editor
             int height = EditorGUILayout.IntSlider("Height", selectedLevel.BoardHeight,
                 LevelDefinition.MinimumBoardSize, LevelDefinition.MaximumBoardSize);
             int timer = EditorGUILayout.IntField("Timer (sec)", selectedLevel.TimerSeconds);
+            int rewardGold = EditorGUILayout.IntField("Reward Gold", selectedLevel.RewardGold);
             EditorGUILayout.Space(8f);
             GUILayout.Label("CAMERA", EditorStyles.boldLabel);
             LevelCameraSettings cameraSettings = selectedLevel.CameraSettings;
             Vector3 cameraPosition = EditorGUILayout.Vector3Field("Position", cameraSettings.Position);
             Vector3 cameraRotation = EditorGUILayout.Vector3Field("Rotation", cameraSettings.Rotation);
             float cameraFieldOfView = EditorGUILayout.Slider("Field of View", cameraSettings.FieldOfView, 20f, 100f);
+            EditorGUILayout.Space(8f);
+            GUILayout.Label("LIGHTING", EditorStyles.boldLabel);
+            Vector3 directionalLightRotation = EditorGUILayout.Vector3Field(
+                "Directional Light Rotation", selectedLevel.LightingSettings.DirectionalLightRotation);
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(selectedLevel, "Edit Level Settings");
                 selectedLevel.SetDisplayName(displayName);
                 selectedLevel.SetBoardSize(width, height);
                 selectedLevel.SetTimer(timer);
+                selectedLevel.SetRewardGold(rewardGold);
                 selectedLevel.SetCameraSettings(cameraPosition, cameraRotation, cameraFieldOfView);
+                selectedLevel.SetDirectionalLightRotation(directionalLightRotation);
                 MarkChanged();
             }
 
@@ -1450,11 +1457,14 @@ namespace ColorBlockJam.Editor
 
             BoardPreviewGenerator generator = previewRoot.GetComponentInChildren<BoardPreviewGenerator>(true);
             Camera previewCamera = previewRoot.GetComponentInChildren<Camera>(true);
-            if (generator == null || previewCamera == null)
+            Light previewDirectionalLight = null;
+            foreach (Light light in previewRoot.GetComponentsInChildren<Light>(true))
+                if (light.type == LightType.Directional) { previewDirectionalLight = light; break; }
+            if (generator == null || previewCamera == null || previewDirectionalLight == null)
             {
                 Undo.DestroyObjectImmediate(previewRoot);
                 EditorUtility.DisplayDialog("Level Runtime Prefab is incomplete",
-                    "The prefab needs both a BoardPreviewGenerator and a Camera.", "OK");
+                    "The prefab needs a BoardPreviewGenerator, a Camera, and a directional Light.", "OK");
                 return;
             }
 
@@ -1462,6 +1472,7 @@ namespace ColorBlockJam.Editor
             generator.Configure(selectedLevel, visualSettings);
             generator.Rebuild();
             LevelCameraSettingsApplicator.Apply(previewCamera, selectedLevel.CameraSettings);
+            LevelLightingSettingsApplicator.Apply(previewDirectionalLight, selectedLevel.LightingSettings);
             EditorUtility.SetDirty(generator);
             EditorSceneManager.MarkSceneDirty(previewRoot.scene);
             Selection.activeGameObject = previewRoot;

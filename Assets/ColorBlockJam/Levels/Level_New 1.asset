@@ -1,0 +1,351 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4be1882fffb169e419e1d003eed924bd, type: 3}
+  m_Name: Level_New 1
+  m_EditorClassIdentifier: 
+  displayName: Level_3
+  boardWidth: 8
+  boardHeight: 8
+  timerSeconds: 20
+  cameraSettings:
+    position: {x: 0, y: 16.55, z: -1.6}
+    rotation: {x: 85, y: 0, z: 0}
+    fieldOfView: 68.24
+  lightingSettings:
+    directionalLightRotation: {x: 45, y: -35, z: 0}
+  blocks:
+  - id: Block_6ec0c67b554a4a05af35c94dec0252ba
+    color: 1
+    shape: 0
+    position: {x: 1, y: 6}
+    groupId: BlockGroup_96fdc77b3a804c799342499bddc5dc95
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 1
+      iceUnlockAfter: 3
+  - id: Block_463779ef69104af692ac3a50c03b386f
+    color: 1
+    shape: 0
+    position: {x: 1, y: 5}
+    groupId: BlockGroup_96fdc77b3a804c799342499bddc5dc95
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 1
+      iceUnlockAfter: 3
+  - id: Block_131f2539bb9547e292184dfa8a212181
+    color: 1
+    shape: 0
+    position: {x: 2, y: 5}
+    groupId: BlockGroup_96fdc77b3a804c799342499bddc5dc95
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 1
+      iceUnlockAfter: 3
+  - id: Block_6e2a9e8bb546438fa7fafeab97b455ff
+    color: 1
+    shape: 0
+    position: {x: 2, y: 6}
+    groupId: BlockGroup_96fdc77b3a804c799342499bddc5dc95
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 1
+      iceUnlockAfter: 3
+  - id: Block_46e2a699fc0241c78fa6ed4ec4f249a3
+    color: 2
+    shape: 0
+    position: {x: 6, y: 5}
+    groupId: BlockGroup_8372418405cb47c7b39f69120d0d2eac
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_117797e1e6d94e4b946892208cbb2151
+    color: 2
+    shape: 0
+    position: {x: 6, y: 4}
+    groupId: BlockGroup_8372418405cb47c7b39f69120d0d2eac
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_7eec8f5b48bb45edb9551710b69ab164
+    color: 2
+    shape: 0
+    position: {x: 5, y: 4}
+    groupId: BlockGroup_8372418405cb47c7b39f69120d0d2eac
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_10a861d7f6084850bd665607202dfc41
+    color: 2
+    shape: 0
+    position: {x: 5, y: 5}
+    groupId: BlockGroup_8372418405cb47c7b39f69120d0d2eac
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_060f394ddbbc4b049455fe916769ee83
+    color: 4
+    shape: 0
+    position: {x: 1, y: 4}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_9f1d5af4c76349639be07cddb866dee3
+    color: 4
+    shape: 0
+    position: {x: 2, y: 4}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_28d0bf411813441599e38f35647f7340
+    color: 4
+    shape: 0
+    position: {x: 3, y: 4}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_902c63e652864a3eb17bb324ce157cdf
+    color: 4
+    shape: 0
+    position: {x: 4, y: 4}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_fdc9658410484f93a81e9e69b37d7d54
+    color: 4
+    shape: 0
+    position: {x: 4, y: 3}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_6ac1da402d51403d9b2682b481661d9c
+    color: 4
+    shape: 0
+    position: {x: 3, y: 3}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_c3de8a8201ef4da2922e3e95f9f921ab
+    color: 4
+    shape: 0
+    position: {x: 2, y: 3}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_15e9412ec6ca49caaea2a12678b184cb
+    color: 4
+    shape: 0
+    position: {x: 1, y: 3}
+    groupId: BlockGroup_c4c681d99aaa47f28c98dad606a7dd20
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_a9536807f41f482086d515b91ac3fbad
+    color: 5
+    shape: 0
+    position: {x: 3, y: 6}
+    groupId: BlockGroup_90b6deee1feb49dc8d913c1c3516748b
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_09baaa97415f496b88dc10b953576df9
+    color: 5
+    shape: 0
+    position: {x: 3, y: 5}
+    groupId: BlockGroup_90b6deee1feb49dc8d913c1c3516748b
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_0095c3984a4c4beabf73ae61ec208096
+    color: 5
+    shape: 0
+    position: {x: 4, y: 5}
+    groupId: BlockGroup_90b6deee1feb49dc8d913c1c3516748b
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  - id: Block_deaed9c42f314553adfde53bc566e07c
+    color: 5
+    shape: 0
+    position: {x: 4, y: 6}
+    groupId: BlockGroup_90b6deee1feb49dc8d913c1c3516748b
+    quarterTurns: 0
+    features:
+      movementMode: 0
+      iceLockEnabled: 0
+      iceUnlockAfter: 1
+  doors:
+  - id: Gate_e0b83c76c6b740548ae55556128edc34
+    color: 2
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 0, y: 4}
+    quarterTurns: 1
+  - id: Gate_6ecff66657b749a48952c980ee74a11e
+    color: 2
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 0, y: 3}
+    quarterTurns: 1
+  - id: Gate_d45a2baaef8746cd8e8ef890a4471188
+    color: 4
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 7, y: 5}
+    quarterTurns: 1
+  - id: Gate_96590fc0f6264acb862f84bb4ebe9a87
+    color: 4
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 7, y: 4}
+    quarterTurns: 1
+  - id: Gate_d7ebe8d2cced4d17b659efe31642dcc0
+    color: 5
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 4, y: 0}
+    quarterTurns: 0
+  - id: Gate_e0e65514dd00473cb5e0b858ce7a371f
+    color: 5
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 3, y: 0}
+    quarterTurns: 0
+  - id: Gate_535f4ed481ea4b01b7df7f76b220d442
+    color: 1
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 2, y: 0}
+    quarterTurns: 0
+  - id: Gate_c9cc34006827401488772c3343d1cf35
+    color: 1
+    edge: 0
+    edgePosition: 0
+    width: 1
+    gridPlaced: 1
+    position: {x: 1, y: 0}
+    quarterTurns: 0
+  walls:
+  - id: Wall_a9009a68e4dc426788c61a488a676779
+    position: {x: 0, y: 7}
+    quarterTurns: 0
+  - id: Wall_fa9056b1bee14f91b9f7b5dcfaba9916
+    position: {x: 1, y: 7}
+    quarterTurns: 0
+  - id: Wall_b09a530cb0e34e418ae12be332142252
+    position: {x: 2, y: 7}
+    quarterTurns: 0
+  - id: Wall_98686fb21ab540a59ec7056eb0e2f0e0
+    position: {x: 3, y: 7}
+    quarterTurns: 0
+  - id: Wall_12922bcd0b394858a44cf756c3fc1603
+    position: {x: 4, y: 7}
+    quarterTurns: 0
+  - id: Wall_c87ba4bb1a1c41e385b37312ce01c937
+    position: {x: 5, y: 7}
+    quarterTurns: 0
+  - id: Wall_eae9b74416ae401681533ca3a9bc665b
+    position: {x: 5, y: 6}
+    quarterTurns: 0
+  - id: Wall_9b40f1e65f854bf4b869d359bfd36d37
+    position: {x: 6, y: 6}
+    quarterTurns: 0
+  - id: Wall_f42656ed897b466ba0df1f9ba3d98e13
+    position: {x: 7, y: 6}
+    quarterTurns: 0
+  - id: Wall_49b9a145a7ae4d699467dbc0cabc20a1
+    position: {x: 7, y: 3}
+    quarterTurns: 0
+  - id: Wall_33996fd8a98a4371a98a946e14e17c53
+    position: {x: 5, y: 0}
+    quarterTurns: 0
+  - id: Wall_de21c6cf93424cdcbd34d3e2a423006a
+    position: {x: 0, y: 0}
+    quarterTurns: 0
+  - id: Wall_61664615290544f3b0e610c63631a21e
+    position: {x: 0, y: 1}
+    quarterTurns: 0
+  - id: Wall_3d603c693eda4bc78ee7f566b7f1d482
+    position: {x: 0, y: 2}
+    quarterTurns: 0
+  - id: Wall_e0eca4e07aa944a491bce299fcfd66be
+    position: {x: 0, y: 5}
+    quarterTurns: 0
+  - id: Wall_0fb86483d9a145169c0c13019b273f60
+    position: {x: 0, y: 6}
+    quarterTurns: 0
+  - id: Wall_383350272d4c42c2a1f9898a515851bf
+    position: {x: 7, y: 2}
+    quarterTurns: 0
+  - id: Wall_bb64c93f31b747a591746b18c70bada5
+    position: {x: 7, y: 1}
+    quarterTurns: 0
+  - id: Wall_3aa4cdb9039147e0bc44b2c2bc441448
+    position: {x: 7, y: 0}
+    quarterTurns: 0
+  - id: Wall_94aa56aeb85f4f359238d2bf074bb45b
+    position: {x: 6, y: 0}
+    quarterTurns: 0
