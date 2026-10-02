@@ -13,6 +13,9 @@ namespace ColorBlockJam.UI
 
         [SerializeField] private Text currentLevelLabel;
         [SerializeField] private Text[] upcomingLevelLabels;
+        [SerializeField] private Image pathRail;
+        [SerializeField] private Image leftRailBorder;
+        [SerializeField] private Image rightRailBorder;
 
         private void OnEnable() => ConfigurePathRail();
 
@@ -33,41 +36,22 @@ namespace ColorBlockJam.UI
 
         private void ConfigurePathRail()
         {
-            Transform railTransform = transform.Find("PathLine");
-            if (railTransform == null) return;
-
-            railTransform.SetAsFirstSibling();
-            Image railImage = railTransform.GetComponent<Image>();
-            if (railImage == null) return;
-
-            railImage.color = RailBlue;
-            railImage.raycastTarget = false;
-            ConfigureRailBorder(railTransform, railImage, "Left Gold Border", -42f);
-            ConfigureRailBorder(railTransform, railImage, "Right Gold Border", 42f);
-        }
-
-        private static void ConfigureRailBorder(Transform railTransform, Image railImage, string borderName, float positionX)
-        {
-            Transform borderTransform = railTransform.Find(borderName);
-            if (borderTransform == null)
+            if (pathRail != null)
             {
-                var borderObject = new GameObject(borderName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-                borderTransform = borderObject.transform;
-                borderTransform.SetParent(railTransform, false);
+                pathRail.transform.SetAsFirstSibling();
+                pathRail.color = RailBlue;
+                pathRail.raycastTarget = false;
             }
 
-            var rectTransform = (RectTransform)borderTransform;
-            rectTransform.anchorMin = new Vector2(0.5f, 0f);
-            rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = new Vector2(positionX, 0f);
-            rectTransform.sizeDelta = new Vector2(12f, 0f);
+            ConfigureRailBorder(leftRailBorder);
+            ConfigureRailBorder(rightRailBorder);
+        }
 
-            Image borderImage = borderTransform.GetComponent<Image>();
-            borderImage.sprite = railImage.sprite;
-            borderImage.type = Image.Type.Simple;
-            borderImage.color = RailGold;
-            borderImage.raycastTarget = false;
+        private static void ConfigureRailBorder(Image border)
+        {
+            if (border == null) return;
+            border.color = RailGold;
+            border.raycastTarget = false;
         }
     }
 }

@@ -40,6 +40,8 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private Button nextLevelButton;
 
         private GameObject currentLevelInstance;
+        private LevelRuntimeContext currentRuntime;
+        private LevelRuntimeFactory runtimeFactory;
         private LevelCountdown currentCountdown;
         private BoardGridState currentBoard;
         private GameplayInputController currentInput;
@@ -47,15 +49,20 @@ namespace ColorBlockJam.Gameplay
         private int currentLevelIndex;
         private bool hasLevelResolved;
         private bool isAwaitingExitResolution;
+        private bool isPaused;
         private Coroutine pendingSuccessPresentation;
         private Coroutine pendingTimeoutResolution;
 
         public LevelDefinition CurrentLevel => currentLevel;
         public int CurrentLevelIndex => currentLevelIndex;
+        public bool IsLevelActive => currentRuntime != null && !hasLevelResolved;
+        public bool IsPaused => isPaused;
         public event Action<LevelDefinition, int> LevelLoaded;
+        public event Action<bool> PauseChanged;
 
         private void Awake()
         {
+            runtimeFactory = new LevelRuntimeFactory(levelRuntimePrefab, visualSettings);
             if (playButton != null) playButton.onClick.AddListener(StartCurrentLevel);
             if (hudRestartButton != null) hudRestartButton.onClick.AddListener(RestartCurrentLevel);
             if (retryButton != null) retryButton.onClick.AddListener(RestartCurrentLevel);
@@ -76,6 +83,7 @@ namespace ColorBlockJam.Gameplay
 
         private void OnDestroy()
         {
+            Time.timeScale = 1f;
             if (playButton != null) playButton.onClick.RemoveListener(StartCurrentLevel);
             if (hudRestartButton != null) hudRestartButton.onClick.RemoveListener(RestartCurrentLevel);
             if (retryButton != null) retryButton.onClick.RemoveListener(RestartCurrentLevel);
@@ -106,53 +114,23 @@ namespace ColorBlockJam.Gameplay
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
             levelPathView?.Refresh(currentLevelIndex);
             levelView?.SetLevelNumber(currentLevelIndex + 1);
-            ResolveGoldView()?.Refresh();
-            ResolveRewardView()?.SetReward(currentLevel.RewardGold);
+            goldView?.Refresh();
+            rewardView?.SetReward(currentLevel.RewardGold);
             hasLevelResolved = false;
             isAwaitingExitResolution = false;
+            SetPaused(false);
 
             SetScreenState(showMenu: false, showHud: true, showEndGame: false);
             DestroyCurrentLevel();
 
-            currentLevelInstance = Instantiate(levelRuntimePrefab);
-            currentLevelInstance.name = $"RuntimeLevel_{currentLevelIndex + 1:000}";
-            ApplyCameraSettings(currentLevelInstance, currentLevel.CameraSettings);
-            ApplyLightingSettings(currentLevelInstance, currentLevel.LightingSettings);
-            BoardPreviewGenerator boardBuilder = currentLevelInstance.GetComponentInChildren<BoardPreviewGenerator>();
-            if (boardBuilder == null)
-            {
-                Debug.LogError("Level Runtime Prefab needs a BoardPreviewGenerator on its BoardRoot.", currentLevelInstance);
-                DestroyCurrentLevel();
-                return false;
-            }
-            boardBuilder.Configure(currentLevel, visualSettings);
-            boardBuilder.Rebuild();
-            currentBoard = currentLevelInstance.GetComponentInChildren<BoardGridState>();
-            if (currentBoard == null)
-            {
-                Debug.LogError("Level Runtime Prefab could not build a BoardGridState.", currentLevelInstance);
-                DestroyCurrentLevel();
-                return false;
-            }
+            if (!runtimeFactory.TryCreate(currentLevel, currentLevelIndex + 1, out currentRuntime)) return false;
+
+            currentLevelInstance = currentRuntime.Root;
+            currentBoard = currentRuntime.Board;
+            currentInput = currentRuntime.Input;
+            currentCountdown = currentRuntime.Countdown;
             currentBoard.RemainingBlockCountChanged += HandleRemainingBlockCountChanged;
-
-            currentInput = currentLevelInstance.GetComponentInChildren<GameplayInputController>(true);
-            if (currentInput == null)
-            {
-                Debug.LogError("Level Runtime Prefab needs a GameplayInputController.", currentLevelInstance);
-                DestroyCurrentLevel();
-                return false;
-            }
-            currentInput.Configure(currentBoard);
             currentInput.SetInputEnabled(true);
-
-            currentCountdown = currentLevelInstance.GetComponentInChildren<LevelCountdown>();
-            if (currentCountdown == null)
-            {
-                Debug.LogError("Level Runtime Prefab needs a LevelCountdown component on its root.", currentLevelInstance);
-                DestroyCurrentLevel();
-                return false;
-            }
 
             currentCountdown.TimeChanged += UpdateTimerView;
             currentCountdown.Expired += HandleTimerExpired;
@@ -177,7 +155,7 @@ namespace ColorBlockJam.Gameplay
             SetGameplayInputEnabled(false);
             LevelProgress.UnlockThrough(currentLevelIndex + 1);
             GoldWallet.Add(currentLevel != null ? currentLevel.RewardGold : 0);
-            ResolveGoldView()?.Refresh();
+            goldView?.Refresh();
             pendingSuccessPresentation = StartCoroutine(ShowSuccessAfterDelay());
         }
 
@@ -209,6 +187,18 @@ namespace ColorBlockJam.Gameplay
             SetScreenState(showMenu: true, showHud: false, showEndGame: false);
         }
 
+        public void PauseCurrentLevel()
+        {
+            if (!IsLevelActive || isPaused) return;
+            SetPaused(true);
+        }
+
+        public void ResumeCurrentLevel()
+        {
+            if (!IsLevelActive || !isPaused) return;
+            SetPaused(false);
+        }
+
         private void DestroyCurrentLevel()
         {
             CancelPendingSuccessPresentation();
@@ -217,10 +207,26 @@ namespace ColorBlockJam.Gameplay
             UnbindCountdown();
             UnbindBoard();
             currentInput = null;
+            currentRuntime = null;
+            if (isPaused)
+            {
+                isPaused = false;
+                Time.timeScale = 1f;
+                PauseChanged?.Invoke(false);
+            }
             if (currentLevelInstance == null) return;
             currentLevelInstance.SetActive(false);
             Destroy(currentLevelInstance);
             currentLevelInstance = null;
+        }
+
+        private void SetPaused(bool paused)
+        {
+            isPaused = paused && IsLevelActive;
+            Time.timeScale = isPaused ? 0f : 1f;
+            currentCountdown?.SetPaused(isPaused);
+            SetGameplayInputEnabled(!isPaused && IsLevelActive);
+            PauseChanged?.Invoke(isPaused);
         }
 
         private void StopActiveCountdown()
@@ -309,63 +315,6 @@ namespace ColorBlockJam.Gameplay
             if (pendingTimeoutResolution == null) return;
             StopCoroutine(pendingTimeoutResolution);
             pendingTimeoutResolution = null;
-        }
-
-        private HudGoldView ResolveGoldView()
-        {
-            if (gameplayHud == null) return null;
-
-            foreach (Text label in gameplayHud.GetComponentsInChildren<Text>(true))
-            {
-                if (label.gameObject.name != "Amount") continue;
-                if (goldView == null) goldView = label.GetComponent<HudGoldView>();
-                if (goldView == null) goldView = label.gameObject.AddComponent<HudGoldView>();
-                goldView.Bind(label);
-                return goldView;
-            }
-
-            Debug.LogError("Gameplay HUD needs an Amount Text for the gold balance.", gameplayHud);
-            return null;
-        }
-
-        private LevelRewardView ResolveRewardView()
-        {
-            if (successContent == null) return null;
-
-            foreach (Text label in successContent.GetComponentsInChildren<Text>(true))
-            {
-                if (label.gameObject.name != "RewardCoin") continue;
-                if (rewardView == null) rewardView = label.GetComponent<LevelRewardView>();
-                if (rewardView == null) rewardView = label.gameObject.AddComponent<LevelRewardView>();
-                rewardView.Bind(label);
-                return rewardView;
-            }
-
-            Debug.LogError("Success Content needs a RewardCoin Text for the level reward.", successContent);
-            return null;
-        }
-
-        private static void ApplyCameraSettings(GameObject levelInstance, LevelCameraSettings settings)
-        {
-            if (levelInstance == null || settings == null) return;
-
-            Camera levelCamera = levelInstance.GetComponentInChildren<Camera>(true);
-            if (LevelCameraSettingsApplicator.Apply(levelCamera, settings)) return;
-            Debug.LogError("Level Runtime Prefab needs a Camera.", levelInstance);
-        }
-
-        private static void ApplyLightingSettings(GameObject levelInstance, LevelLightingSettings settings)
-        {
-            if (levelInstance == null || settings == null) return;
-
-            foreach (Light light in levelInstance.GetComponentsInChildren<Light>(true))
-            {
-                if (light.type != LightType.Directional) continue;
-                LevelLightingSettingsApplicator.Apply(light, settings);
-                return;
-            }
-
-            Debug.LogError("Level Runtime Prefab needs a directional Light.", levelInstance);
         }
 
         private void ShowEndGame(bool success)

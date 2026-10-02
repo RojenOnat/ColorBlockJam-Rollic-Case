@@ -9,15 +9,7 @@ namespace ColorBlockJam.Board
     [DisallowMultipleComponent]
     public sealed class BoardPreviewGenerator : MonoBehaviour
     {
-        private const string GeneratedRootName = "Generated Board";
-
-        private enum BlockPartType
-        {
-            Corner,
-            Edge,
-            Middle,
-            InnerCorner
-        }
+        public const string GeneratedRootName = "Generated Board";
 
         [SerializeField] private LevelDefinition level;
         [SerializeField] private BoardVisualSettings visualSettings;
@@ -30,37 +22,6 @@ namespace ColorBlockJam.Board
             RestoreGeneratedBlockColors();
         }
 
-#if UNITY_EDITOR
-        [UnityEditor.InitializeOnLoadMethod]
-        private static void RegisterPlayModeSelectionGuard()
-        {
-            UnityEditor.EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
-            UnityEditor.EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
-        }
-
-        private static void HandlePlayModeStateChanged(UnityEditor.PlayModeStateChange state)
-        {
-            if (state != UnityEditor.PlayModeStateChange.ExitingEditMode) return;
-
-            foreach (UnityEngine.Object selected in UnityEditor.Selection.objects)
-            {
-                GameObject selectedObject = selected as GameObject;
-                if (selectedObject == null && selected is Component component)
-                    selectedObject = component.gameObject;
-                if (selectedObject == null) continue;
-
-                Transform current = selectedObject.transform;
-                while (current != null && current.name != GeneratedRootName)
-                    current = current.parent;
-                if (current == null) continue;
-
-                BoardPreviewGenerator generator = current.GetComponentInParent<BoardPreviewGenerator>();
-                UnityEditor.Selection.activeGameObject = generator != null ? generator.gameObject : null;
-                break;
-            }
-        }
-#endif
-
         public void Configure(LevelDefinition levelDefinition, BoardVisualSettings settings)
         {
             level = levelDefinition;
@@ -72,17 +33,12 @@ namespace ColorBlockJam.Board
         {
             ClearGenerated();
             if (level == null || visualSettings == null) return;
-            if (level.EnsureBlockGroupIds())
-            {
-#if UNITY_EDITOR
-                UnityEditor.EditorUtility.SetDirty(level);
-#endif
-            }
+            level.EnsureBlockGroupIds();
 
             Transform generatedRoot = new GameObject(GeneratedRootName).transform;
             generatedRoot.SetParent(transform, false);
 
-            HashSet<Vector2Int> enclosedCells = FindEnclosedCells();
+            HashSet<Vector2Int> enclosedCells = BoardTopology.FindEnclosedCells(level);
             BoardGridState board = generatedRoot.gameObject.AddComponent<BoardGridState>();
             board.Configure(level.BoardWidth, level.BoardHeight, visualSettings.CellSize, enclosedCells);
 
@@ -98,35 +54,9 @@ namespace ColorBlockJam.Board
             Transform existing = transform.Find(GeneratedRootName);
             if (existing == null) return;
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying && SelectionContains(existing))
-            {
-                UnityEditor.Selection.objects = level != null
-                    ? new UnityEngine.Object[] { level }
-                    : System.Array.Empty<UnityEngine.Object>();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-            }
-#endif
-
             if (Application.isPlaying) Destroy(existing.gameObject);
             else DestroyImmediate(existing.gameObject);
         }
-
-#if UNITY_EDITOR
-        private static bool SelectionContains(Transform root)
-        {
-            foreach (UnityEngine.Object selected in UnityEditor.Selection.objects)
-            {
-                GameObject selectedObject = selected as GameObject;
-                if (selectedObject == null && selected is Component component)
-                    selectedObject = component.gameObject;
-                if (selectedObject == null) continue;
-                if (selectedObject == root.gameObject || selectedObject.transform.IsChildOf(root))
-                    return true;
-            }
-            return false;
-        }
-#endif
 
         private void BuildTiles(Transform root, HashSet<Vector2Int> enclosedCells)
         {
@@ -344,9 +274,9 @@ namespace ColorBlockJam.Board
                 foreach (BlockDefinition block in component)
                 {
                     if (innerCornerCells.Contains(block)) continue;
-                    BlockPartType partType = GetBlockPartType(block);
+                    BlockVisualPart partType = BlockTopology.GetVisualPart(level, block);
 
-                    float angle = GetBlockRotation(block);
+                    float angle = BlockTopology.GetVisualRotation(level, block);
                     Quaternion rotation = Quaternion.Euler(0f, angle, 0f);
                     Vector3 position = CellCenter(block.Position.x, block.Position.y) - groupCenter +
                                        rotation * visualSettings.BlockOffset;
@@ -432,7 +362,7 @@ namespace ColorBlockJam.Board
                 BlockDefinition current = pending.Dequeue();
                 foreach (Vector2Int direction in directions)
                 {
-                    BlockDefinition neighbour = GetBlockAt(current.Position + direction);
+                    BlockDefinition neighbour = BlockTopology.GetBlockAt(level, current.Position + direction);
                     if (neighbour == null || neighbour.GroupId != seed.GroupId || !remaining.Remove(neighbour))
                         continue;
                     component.Add(neighbour);
@@ -467,10 +397,10 @@ namespace ColorBlockJam.Board
             {
                 for (int x = 0; x < level.BoardWidth - 1; x++)
                 {
-                    BlockDefinition bottomLeft = GetBlockAt(new Vector2Int(x, y));
-                    BlockDefinition bottomRight = GetBlockAt(new Vector2Int(x + 1, y));
-                    BlockDefinition topLeft = GetBlockAt(new Vector2Int(x, y + 1));
-                    BlockDefinition topRight = GetBlockAt(new Vector2Int(x + 1, y + 1));
+                    BlockDefinition bottomLeft = BlockTopology.GetBlockAt(level, new Vector2Int(x, y));
+                    BlockDefinition bottomRight = BlockTopology.GetBlockAt(level, new Vector2Int(x + 1, y));
+                    BlockDefinition topLeft = BlockTopology.GetBlockAt(level, new Vector2Int(x, y + 1));
+                    BlockDefinition topRight = BlockTopology.GetBlockAt(level, new Vector2Int(x + 1, y + 1));
 
                     BlockDefinition anchor;
                     BlockDefinition first;
@@ -533,7 +463,7 @@ namespace ColorBlockJam.Board
                     GameObject instance = Create(prefab, position, Quaternion.identity, blockRoot,
                         $"Block_{anchor.Color}_InnerCorner_{anchor.Position.x}_{anchor.Position.y}");
                     SetBlockRotation(instance.transform, rotation);
-                    SetActiveBlockPart(instance, BlockPartType.InnerCorner);
+                    SetActiveBlockPart(instance, BlockVisualPart.InnerCorner);
                     ApplyMaterial(instance, visualSettings.BlockMaterial);
                     ClearMaterialOverrides(instance);
                     ApplyColor(instance, anchor.Color);
@@ -560,13 +490,13 @@ namespace ColorBlockJam.Board
             rotationRoot.localRotation = rotation;
         }
 
-        private static Transform SetActiveBlockPart(GameObject instance, BlockPartType activePart)
+        private static Transform SetActiveBlockPart(GameObject instance, BlockVisualPart activePart)
         {
-            string activeName = activePart == BlockPartType.Corner
+            string activeName = activePart == BlockVisualPart.Corner
                 ? "Block_Corner"
-                : activePart == BlockPartType.Middle
+                : activePart == BlockVisualPart.Middle
                     ? "Block_Center"
-                    : activePart == BlockPartType.InnerCorner
+                    : activePart == BlockVisualPart.InnerCorner
                         ? "ModularBlock_InnerCorner"
                         : "Block_Edge";
 
@@ -599,54 +529,9 @@ namespace ColorBlockJam.Board
             activePart.position += correction;
         }
 
-        private BlockDefinition GetBlockAt(Vector2Int coordinate)
-        {
-            foreach (BlockDefinition block in level.Blocks)
-                if (block.Position == coordinate) return block;
-            return null;
-        }
-
         private bool HasMatchingBlock(Vector2Int coordinate, BlockDefinition source)
         {
-            BlockDefinition block = GetBlockAt(coordinate);
-            return block != null && block.GroupId == source.GroupId;
-        }
-
-        private BlockPartType GetBlockPartType(BlockDefinition block)
-        {
-            Vector2Int coordinate = block.Position;
-            bool left = HasMatchingBlock(coordinate + Vector2Int.left, block);
-            bool right = HasMatchingBlock(coordinate + Vector2Int.right, block);
-            bool bottom = HasMatchingBlock(coordinate + Vector2Int.down, block);
-            bool top = HasMatchingBlock(coordinate + Vector2Int.up, block);
-            int count = (left ? 1 : 0) + (right ? 1 : 0) + (bottom ? 1 : 0) + (top ? 1 : 0);
-
-            if (count == 4) return BlockPartType.Middle;
-            if (count == 2 && (left || right) && (bottom || top)) return BlockPartType.Corner;
-            return BlockPartType.Edge;
-        }
-
-        private float GetBlockRotation(BlockDefinition block)
-        {
-            Vector2Int coordinate = block.Position;
-            bool left = HasMatchingBlock(coordinate + Vector2Int.left, block);
-            bool right = HasMatchingBlock(coordinate + Vector2Int.right, block);
-            bool bottom = HasMatchingBlock(coordinate + Vector2Int.down, block);
-            bool top = HasMatchingBlock(coordinate + Vector2Int.up, block);
-
-            if (GetBlockPartType(block) == BlockPartType.Corner)
-            {
-                if (right && bottom) return 0f;
-                if (left && bottom) return 90f;
-                if (left && top) return 180f;
-                if (right && top) return 270f;
-            }
-
-            if (!top) return 0f;
-            if (!right) return 90f;
-            if (!bottom) return 180f;
-            if (!left) return 270f;
-            return 0f;
+            return BlockTopology.IsSameGroupAt(level, source, coordinate);
         }
 
         private static void ApplyColor(GameObject instance, BlockColor color, float brightness = 1f)
@@ -776,7 +661,7 @@ namespace ColorBlockJam.Board
                     : visualSettings.StraightWallPrefab;
                 if (prefab == null) continue;
 
-                float angle = GetAutomaticRotation(wall.Position, corner);
+                float angle = GetAutomaticRotation(wall.Position);
                 Quaternion baseRotation = corner
                     ? visualSettings.CornerBaseRotation
                     : visualSettings.StraightWallBaseRotation;
@@ -789,94 +674,11 @@ namespace ColorBlockJam.Board
             }
         }
 
-        private bool IsWallCell(Vector2Int coordinate)
-        {
-            foreach (WallDefinition wall in level.Walls)
-                if (wall.Position == coordinate) return true;
-            return false;
-        }
-
-        private bool IsGateCell(Vector2Int coordinate)
-        {
-            foreach (DoorDefinition gate in level.Doors)
-                if (gate.GridPlaced && gate.Position == coordinate) return true;
-            return false;
-        }
-
-        private bool IsBoundaryCell(Vector2Int coordinate)
-        {
-            return IsWallCell(coordinate) || IsGateCell(coordinate);
-        }
-
         private bool IsCornerCell(Vector2Int coordinate)
-        {
-            if (!IsWallCell(coordinate)) return false;
-            bool left = IsBoundaryCell(coordinate + Vector2Int.left);
-            bool right = IsBoundaryCell(coordinate + Vector2Int.right);
-            bool bottom = IsBoundaryCell(coordinate + Vector2Int.down);
-            bool top = IsBoundaryCell(coordinate + Vector2Int.up);
-            int neighbourCount = (left ? 1 : 0) + (right ? 1 : 0) + (bottom ? 1 : 0) + (top ? 1 : 0);
-            return neighbourCount == 2 && (left || right) && (bottom || top);
-        }
+            => BoardTopology.IsCorner(level, coordinate);
 
-        private float GetAutomaticRotation(Vector2Int coordinate, bool corner)
-        {
-            bool left = IsBoundaryCell(coordinate + Vector2Int.left);
-            bool right = IsBoundaryCell(coordinate + Vector2Int.right);
-            bool bottom = IsBoundaryCell(coordinate + Vector2Int.down);
-            bool top = IsBoundaryCell(coordinate + Vector2Int.up);
-
-            if (!corner) return left || right ? 0f : 90f;
-            if (right && bottom) return 0f;
-            if (left && bottom) return 90f;
-            if (left && top) return 180f;
-            if (right && top) return 270f;
-            return 0f;
-        }
-
-        private HashSet<Vector2Int> FindEnclosedCells()
-        {
-            var exterior = new HashSet<Vector2Int>();
-            var pending = new Queue<Vector2Int>();
-
-            for (int x = 0; x < level.BoardWidth; x++)
-            {
-                AddExteriorCell(new Vector2Int(x, 0), exterior, pending);
-                AddExteriorCell(new Vector2Int(x, level.BoardHeight - 1), exterior, pending);
-            }
-
-            for (int y = 0; y < level.BoardHeight; y++)
-            {
-                AddExteriorCell(new Vector2Int(0, y), exterior, pending);
-                AddExteriorCell(new Vector2Int(level.BoardWidth - 1, y), exterior, pending);
-            }
-
-            Vector2Int[] directions = { Vector2Int.left, Vector2Int.right, Vector2Int.down, Vector2Int.up };
-            while (pending.Count > 0)
-            {
-                Vector2Int current = pending.Dequeue();
-                foreach (Vector2Int direction in directions)
-                    AddExteriorCell(current + direction, exterior, pending);
-            }
-
-            var enclosed = new HashSet<Vector2Int>();
-            for (int y = 0; y < level.BoardHeight; y++)
-            for (int x = 0; x < level.BoardWidth; x++)
-            {
-                Vector2Int coordinate = new Vector2Int(x, y);
-                if (!IsBoundaryCell(coordinate) && !exterior.Contains(coordinate)) enclosed.Add(coordinate);
-            }
-            return enclosed;
-        }
-
-        private void AddExteriorCell(Vector2Int coordinate, HashSet<Vector2Int> exterior,
-            Queue<Vector2Int> pending)
-        {
-            bool outside = coordinate.x < 0 || coordinate.y < 0 ||
-                           coordinate.x >= level.BoardWidth || coordinate.y >= level.BoardHeight;
-            if (outside || IsBoundaryCell(coordinate) || !exterior.Add(coordinate)) return;
-            pending.Enqueue(coordinate);
-        }
+        private float GetAutomaticRotation(Vector2Int coordinate)
+            => BoardTopology.GetAutomaticRotation(level, coordinate);
 
         private void BuildStraightEdge(BoardEdge edge, int length, HashSet<GateSlot> gateSlots, Transform parent)
         {

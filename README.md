@@ -1,111 +1,78 @@
-# Color Block Jam — Rollic Developer Case
+# Color Block Jam — Rollic Game Developer Case 2026
 
-A Unity project for the Rollic Game Developer Case 2026: a small Color Block Jam vertical slice with five playable levels and a visual level editor for non-technical designers.
+A portrait Unity vertical slice built for the Rollic Game Developer Case. The repository contains five playable levels, a data-driven runtime flow, persistent progression and coins, and a visual level editor intended for non-technical level designers.
 
-**Status: active development.** The shared level format, visual level editor, generated board, grid-based block dragging, color/width-aware gate matching, and automatic block exit flow are implemented. The Gameplay scene now has a data-driven `LevelManager`, runtime level prefab, and an initial Home/HUD/outcome UI shell. The five production levels and final game flow validation are still pending.
+## Requirements
 
-## Requirements and current environment
+- Unity **2022.3.62f2**
+- Universal Render Pipeline **14.0.11**
+- New Input System **1.7.0**
+- Git LFS for binary assets
+- Reference resolution: **1080 × 1920**, with the Canvas configured to scale across portrait aspect ratios including 20:9
 
-| Item | Case requirement | Current project |
-| --- | --- | --- |
-| Unity Editor | 2022.3.62f2 | 2022.3.62f2 |
-| Rendering | Not prescribed | Universal Render Pipeline 14.0.11 |
-| Layout | Portrait, 1080 × 1920; also support 20:9 | Pending implementation and verification |
-| Delivery | Android APK or screen recording up to 3 minutes | Not available yet |
+## Run the project
 
-## Open and run
+1. Clone the repository and run `git lfs install` followed by `git lfs pull`.
+2. Open the repository root with Unity 2022.3.62f2.
+3. Open `Assets/ColorBlockJam/Scenes/Gameplay.unity`.
+4. If this is the first import, run **Color Block Jam > Prepare Gameplay Scene for Submission** once.
+5. Press **Play**. The app starts on the Home screen and loads the selected level through `LevelManager`.
 
-1. Clone the repository with Git and install Git LFS.
-2. Run `git lfs install` and `git lfs pull` inside the clone to retrieve binary assets.
-3. Install **Unity 2022.3.62f2** through Unity Hub.
-4. In Unity Hub, select **Add project from disk** and choose the repository root.
-5. Open the project and allow Unity to restore packages and import assets.
-6. Open `Assets/ColorBlockJam/Scenes/Gameplay.unity` and press **Play**. The Home panel opens first; its Level button loads the selected `LevelDefinition` through `LevelManager`.
+`Gameplay.unity` is the only enabled build scene. Unity-generated directories (`Library`, `Temp`, `Logs`, `UserSettings`, and build output) are excluded from version control.
 
-No Android build or runtime verification has been completed as part of repository preparation.
+## Implemented case scope
 
-## Required scope
+- Home screen with level path, persistent coin display, settings access, and button feedback.
+- Settings popup with persistent sound, music, and vibration state.
+- Gameplay HUD with current level, countdown, coin inventory, restart, and pause controls.
+- Pause, success, and fail flows with restart, home, and next-level actions.
+- Five authored levels sharing the same `LevelDefinition` format used by the editor and runtime.
+- Grid-constrained block movement, collision checks, matching-color gates, exact-width exits, and clean restart.
+- Countdown failure handling that allows an exit already in progress to resolve.
+- Persistent current-level progress and coin rewards.
+- Visual level editor for board size, timer, reward, camera, lighting, walls, gates, blocks, and optional features.
+- Live validation for invalid placement, duplicate IDs, overlaps, and missing block/gate color pairs.
 
-- [x] Initial Home screen, gameplay HUD, success, and fail panel layouts.
-- [ ] Settings screen with visible sound, music, and vibration toggle states and close navigation.
-- [x] Block movement and matching-color, exact-width exits.
-- [ ] First five levels authored with the custom editor.
-- [ ] Countdown timer and failure at zero.
-- [ ] Coin inventory that remains correct when leaving and returning to a level.
-- [ ] Level completion and progression to the next level.
-- [ ] Pause, restart, home navigation, and a working fail popup.
-- [ ] Restart restores the complete initial level state.
-- [x] Visual editor for board dimensions, doors, blocks, and timer values.
-- [x] Create, save, and play levels without writing code or manually editing files.
-- [x] One shared level data format used by the editor and the game.
-- [ ] Verify portrait layout at 1080 × 1920 and on a 20:9 display.
-- [ ] Final APK or screen recording and completed delivery documentation.
+## Architecture
 
-Functional boosters, ice blockers, arrow blocks, and solvability validation are optional. The life system and booster functionality are not required for the initial scope.
+The project keeps authored data, game rules, presentation, and editor tooling separate:
 
-## Project structure
+- **Level data:** `LevelDefinition` ScriptableObjects contain board layout and per-level presentation values. `LevelCatalog` defines play order.
+- **Runtime composition:** `LevelManager` owns navigation and level lifecycle. `LevelRuntimeFactory` builds a disposable runtime instance and returns a `LevelRuntimeContext` containing the board, input, and countdown services.
+- **Rules:** `BoardGridState`, `BoardTopology`, `BlockTopology`, and `LevelValidator` provide reusable board rules without UI dependencies.
+- **Input and presentation:** `GameplayInputController`, `BlockExitMotor`, HUD views, and panel controllers present state and forward player intent.
+- **Persistence:** `LevelProgress`, `GoldWallet`, and `PlayerSettings` isolate `PlayerPrefs` keys from gameplay and UI code.
+- **Designer tuning:** `Assets/ColorBlockJam/Resources/ColorBlockJam/GameTuning.asset` exposes drag sensitivity, drag lift, block exit speed, and success-panel delay.
+- **Assembly boundaries:** runtime, editor, and EditMode tests compile in separate assembly definitions.
 
-```text
-Assets/
-  Game Developer Case Assets/   Supplied UI, textures, and models
-  Lean/                         Imported Lean Common, Touch, and Touch+ packages
-  Scenes/                       Current template scene
-  Settings/                     Render pipeline and rendering configuration
-  TutorialInfo/                 Unity template tutorial content
-Packages/                       Package manifest and dependency lock file
-ProjectSettings/                Shared Unity project configuration
-```
+Scene object references are serialized in Unity. Runtime code does not locate UI by object name or displayed text.
 
-Unity-generated folders such as `Library`, `Temp`, `Logs`, `UserSettings`, and build output are excluded from version control. Asset `.meta` files are versioned to preserve Unity references. Binary asset types are tracked through the repository's Git LFS attributes.
+## Level authoring workflow
 
-## Architecture direction
+Open **Color Block Jam > Level Editor**.
 
-The level-authoring foundation currently follows this design:
+1. Select an existing level or click **New**.
+2. Set board width, height, timer, reward, camera, and directional-light values.
+3. Use **Wall**, **Gate**, and **Block** modes to paint the board. Right-click removes an item where supported.
+4. Use **Features** for optional direction and ice configuration.
+5. Resolve errors in the validation panel.
+6. Click **Save**. The editor stores the ScriptableObject and synchronizes `LevelCatalog`.
+7. Click **Rebuild Preview** to inspect the same runtime prefab, camera, light, and board visuals used in play mode.
 
-- **Data:** `LevelDefinition` is the shared ScriptableObject format for board dimensions, block shapes and positions, door positions and colors, and the timer. `LevelCatalog` orders these assets for runtime loading.
-- **Logic:** `BoardGridState` owns playable cells, live occupancy, gate lookup, and remaining-block state. `GridMovableBlock` owns block state and delegates exit presentation to `BlockExitMotor`.
-- **View and input:** `GameplayInputController` converts pointer input to board-space drag requests. It does not decide collision or gate rules. `BlockExitMotor` plays transform-based exits without Rigidbody physics.
-- **Matching:** `ColorIdentity` provides a shared color contract. `GateGroup` stores connected gate cells and exit direction, then requires exact color, alignment, direction, and width matches.
-- **Level authoring:** a visual editor supports creating, saving, and playing levels without code. Editor-only code should remain separate from runtime code.
-- **Runtime flow:** `LevelManager` owns the selected level, persistence boundary, screen-root switching, and destroy/build lifecycle. It instantiates `Level_Runtime`, which owns the level camera, light, input controller, and board root.
+Level assets live in `Assets/ColorBlockJam/Levels` and use the `Level_###` naming convention. Board presentation is configured through `Assets/ColorBlockJam/Settings/BoardVisualSettings.asset`; reusable runtime prefabs are under `Assets/ColorBlockJam/Prefab`.
 
-Concrete implementation choices and their reasons will be documented as development proceeds.
+## Testing and delivery
 
-## Level editor
+EditMode tests cover shared topology and validation rules under `Assets/ColorBlockJam/Tests/EditMode`. Before submission, run the Unity Test Runner, test all five levels from Home through completion/failure, verify 1080 × 1920 and a 20:9 simulator profile, then create an Android APK or a screen recording no longer than three minutes.
 
-Open the editor from **Color Block Jam > Level Editor** in the Unity menu.
+## Third-party and supplied assets
 
-1. Click **New** to create a level asset under `Assets/ColorBlockJam/Levels`.
-2. Set the board width, height, and timer in the right panel.
-3. Choose **Block**, then select a color and shape and click the visual grid to place it.
-4. Choose **Door**, select a color, and click the band immediately outside a board edge.
-5. Use **Select** to select or drag a block. Selected blocks can be recolored, reshaped, rotated, or deleted from the right panel.
-6. Use **Eraser** to remove blocks and doors directly from the board.
-7. Resolve the errors and warnings shown by the live validation panel, then click **Save**.
-
-Board visuals are generated from `BoardVisualSettings`. The editor creates this asset automatically and searches `Assets/ColorBlockJam/Prefab` for `GroundGrid`, `Wall`, `Corner`, and `Gate` prefabs. It does not substitute FBX sub-assets when a required prefab is missing. Grid-size changes rebuild the tile layout and perimeter; gates replace the straight-wall slots they occupy. Every edge and corner receives its orientation automatically. Use **Rebuild Scene Preview** after changing prefab offsets or base rotations.
-
-The editor keeps `LevelCatalog` synchronized with saved level assets. `LevelManager` reads the catalog and rebuilds the selected level at runtime.
-
-## Assets and dependencies
-
-- The case art is stored in `Assets/Game Developer Case Assets`.
-- Lean Common, Lean Touch, and Lean Touch+ are imported under `Assets/Lean`; their gameplay integration has not been implemented.
-- Unity package versions are defined in `Packages/manifest.json` and `Packages/packages-lock.json`.
-- Supplied assets and third-party packages remain subject to their respective owners' terms. This repository does not grant redistribution rights to those assets or packages.
-
-## Known limitations
-
-- Unity 2022.3.62f2 package migration is configured; the full project must be reopened once in that editor to refresh imported assets and the package lock.
-- Button action wiring, timer presentation, success/fail selection, and progression feedback still need final gameplay verification.
-- The five required levels have not been authored.
-- Device performance, aspect-ratio support, and Android compatibility have not been verified.
-- No final APK or demonstration recording is included.
+Rollic-provided art is stored under `Assets/Game Developer Case Assets`. Unity packages and exact versions are declared in `Packages/manifest.json` and `Packages/packages-lock.json`. Supplied art remains subject to its owner's terms.
 
 ## AI assistance
 
-OpenAI Codex was used to review the case brief and assist with the level editor, board generation, grid movement, gate matching, exit state flow, validation, architecture cleanup, and documentation. All generated code was reviewed and iterated in the Unity project.
+OpenAI Codex was used for code review, architecture cleanup, editor/runtime separation, test scaffolding, and documentation. The resulting behavior and Unity scene setup were reviewed inside the project.
 
 ## Work time
 
-Approximate total development time has not been recorded yet. Add the actual estimate before the final submission.
+Add the actual total development time before final submission.

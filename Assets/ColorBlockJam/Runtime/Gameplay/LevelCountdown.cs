@@ -12,9 +12,11 @@ namespace ColorBlockJam.Gameplay
         private float remainingSeconds;
         private bool isRunning;
         private bool hasExpired;
+        private bool isPaused;
 
         public int DisplaySeconds => Mathf.CeilToInt(remainingSeconds);
         public bool IsRunning => isRunning;
+        public bool IsPaused => isPaused;
 
         public event Action<int> TimeChanged;
         public event Action Expired;
@@ -24,17 +26,28 @@ namespace ColorBlockJam.Gameplay
             remainingSeconds = Mathf.Max(0, seconds);
             isRunning = remainingSeconds > 0f;
             hasExpired = false;
+            isPaused = false;
             NotifyTimeChanged();
 
             if (!isRunning)
                 RaiseExpired();
         }
 
-        public void StopCountdown() => isRunning = false;
+        public void StopCountdown()
+        {
+            isRunning = false;
+            isPaused = false;
+        }
+
+        public void SetPaused(bool paused)
+        {
+            if (!isRunning) return;
+            isPaused = paused;
+        }
 
         private void Update()
         {
-            if (!isRunning) return;
+            if (!isRunning || isPaused) return;
 
             int displayedBeforeTick = DisplaySeconds;
             remainingSeconds = Mathf.Max(0f, remainingSeconds - Time.deltaTime);

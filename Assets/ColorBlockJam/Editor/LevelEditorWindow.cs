@@ -35,13 +35,6 @@ namespace ColorBlockJam.Editor
             Eraser
         }
 
-        private enum BlockPartType
-        {
-            Corner,
-            Edge,
-            Middle
-        }
-
         private enum FeaturePage
         {
             None,
@@ -984,9 +977,10 @@ namespace ColorBlockJam.Editor
         private void CreateLevel()
         {
             EnsureFolder(LevelsFolder);
-            string path = AssetDatabase.GenerateUniqueAssetPath($"{LevelsFolder}/Level_New.asset");
+            string path = GetNextLevelAssetPath();
             var level = CreateInstance<LevelDefinition>();
-            level.SetDisplayName(Path.GetFileNameWithoutExtension(path).Replace('_', ' '));
+            int levelNumber = levels.Count + 1;
+            level.SetDisplayName($"Level_{levelNumber}");
             AssetDatabase.CreateAsset(level, path);
             AssetDatabase.SaveAssets();
             RefreshLevels();
@@ -998,7 +992,7 @@ namespace ColorBlockJam.Editor
         {
             string sourcePath = AssetDatabase.GetAssetPath(selectedLevel);
             string copyPath = AssetDatabase.GenerateUniqueAssetPath(
-                $"{Path.GetDirectoryName(sourcePath)?.Replace('\\', '/')}/{selectedLevel.name}_Copy.asset");
+                $"{Path.GetDirectoryName(sourcePath)?.Replace('\\', '/')}/{selectedLevel.name}_Variant.asset");
             if (AssetDatabase.CopyAsset(sourcePath, copyPath))
             {
                 AssetDatabase.SaveAssets();
@@ -1067,57 +1061,13 @@ namespace ColorBlockJam.Editor
         }
 
         private BlockDefinition GetBlockAt(Vector2Int positionValue)
-        {
-            foreach (BlockDefinition block in selectedLevel.Blocks)
-            {
-                foreach (Vector2Int occupied in BlockShapeLibrary.GetBoardCells(block))
-                    if (occupied == positionValue) return block;
-            }
-            return null;
-        }
+            => BlockTopology.GetBlockAt(selectedLevel, positionValue);
 
-        private bool HasMatchingBlock(Vector2Int positionValue, BlockDefinition source)
-        {
-            BlockDefinition block = GetBlockAt(positionValue);
-            return block != null && block.GroupId == source.GroupId;
-        }
-
-        private BlockPartType GetBlockPartType(BlockDefinition block)
-        {
-            Vector2Int positionValue = block.Position;
-            bool left = HasMatchingBlock(positionValue + Vector2Int.left, block);
-            bool right = HasMatchingBlock(positionValue + Vector2Int.right, block);
-            bool bottom = HasMatchingBlock(positionValue + Vector2Int.down, block);
-            bool top = HasMatchingBlock(positionValue + Vector2Int.up, block);
-            int count = (left ? 1 : 0) + (right ? 1 : 0) + (bottom ? 1 : 0) + (top ? 1 : 0);
-
-            if (count == 4) return BlockPartType.Middle;
-            if (count == 2 && (left || right) && (bottom || top)) return BlockPartType.Corner;
-            return BlockPartType.Edge;
-        }
+        private BlockVisualPart GetBlockPartType(BlockDefinition block)
+            => BlockTopology.GetVisualPart(selectedLevel, block);
 
         private int GetBlockRotation(BlockDefinition block)
-        {
-            Vector2Int positionValue = block.Position;
-            bool left = HasMatchingBlock(positionValue + Vector2Int.left, block);
-            bool right = HasMatchingBlock(positionValue + Vector2Int.right, block);
-            bool bottom = HasMatchingBlock(positionValue + Vector2Int.down, block);
-            bool top = HasMatchingBlock(positionValue + Vector2Int.up, block);
-
-            if (GetBlockPartType(block) == BlockPartType.Corner)
-            {
-                if (right && bottom) return 0;
-                if (left && bottom) return 90;
-                if (left && top) return 180;
-                if (right && top) return 270;
-            }
-
-            if (!top) return 0;
-            if (!right) return 90;
-            if (!bottom) return 180;
-            if (!left) return 270;
-            return 0;
-        }
+            => BlockTopology.GetVisualRotation(selectedLevel, block);
 
         private void AddDoor(BoardEdge edge, int edgePosition)
         {
@@ -1187,92 +1137,17 @@ namespace ColorBlockJam.Editor
             MarkChanged();
         }
 
-        private bool IsWallCell(Vector2Int positionValue)
-        {
-            foreach (WallDefinition wall in selectedLevel.Walls)
-                if (wall.Position == positionValue) return true;
-            return false;
-        }
-
         private bool IsGateCell(Vector2Int positionValue)
-        {
-            foreach (DoorDefinition door in selectedLevel.Doors)
-                if (door.GridPlaced && door.Position == positionValue) return true;
-            return false;
-        }
-
-        private bool IsBoundaryCell(Vector2Int positionValue)
-        {
-            return IsWallCell(positionValue) || IsGateCell(positionValue);
-        }
+            => BoardTopology.IsGate(selectedLevel, positionValue);
 
         private bool IsCornerCell(Vector2Int positionValue)
-        {
-            if (!IsWallCell(positionValue)) return false;
-            bool left = IsBoundaryCell(positionValue + Vector2Int.left);
-            bool right = IsBoundaryCell(positionValue + Vector2Int.right);
-            bool bottom = IsBoundaryCell(positionValue + Vector2Int.down);
-            bool top = IsBoundaryCell(positionValue + Vector2Int.up);
-            int neighbourCount = (left ? 1 : 0) + (right ? 1 : 0) + (bottom ? 1 : 0) + (top ? 1 : 0);
-            return neighbourCount == 2 && (left || right) && (bottom || top);
-        }
+            => BoardTopology.IsCorner(selectedLevel, positionValue);
 
         private int GetAutomaticRotation(Vector2Int positionValue)
-        {
-            bool left = IsBoundaryCell(positionValue + Vector2Int.left);
-            bool right = IsBoundaryCell(positionValue + Vector2Int.right);
-            bool bottom = IsBoundaryCell(positionValue + Vector2Int.down);
-            bool top = IsBoundaryCell(positionValue + Vector2Int.up);
-
-            if (!IsCornerCell(positionValue)) return left || right ? 0 : 90;
-            if (right && bottom) return 0;
-            if (left && bottom) return 90;
-            if (left && top) return 180;
-            if (right && top) return 270;
-            return 0;
-        }
+            => BoardTopology.GetAutomaticRotation(selectedLevel, positionValue);
 
         private HashSet<Vector2Int> FindEnclosedCells()
-        {
-            var exterior = new HashSet<Vector2Int>();
-            var pending = new Queue<Vector2Int>();
-
-            for (int x = 0; x < selectedLevel.BoardWidth; x++)
-            {
-                AddExteriorCell(new Vector2Int(x, 0), exterior, pending);
-                AddExteriorCell(new Vector2Int(x, selectedLevel.BoardHeight - 1), exterior, pending);
-            }
-
-            for (int y = 0; y < selectedLevel.BoardHeight; y++)
-            {
-                AddExteriorCell(new Vector2Int(0, y), exterior, pending);
-                AddExteriorCell(new Vector2Int(selectedLevel.BoardWidth - 1, y), exterior, pending);
-            }
-
-            Vector2Int[] directions = { Vector2Int.left, Vector2Int.right, Vector2Int.down, Vector2Int.up };
-            while (pending.Count > 0)
-            {
-                Vector2Int current = pending.Dequeue();
-                foreach (Vector2Int direction in directions)
-                    AddExteriorCell(current + direction, exterior, pending);
-            }
-
-            var enclosed = new HashSet<Vector2Int>();
-            for (int y = 0; y < selectedLevel.BoardHeight; y++)
-            for (int x = 0; x < selectedLevel.BoardWidth; x++)
-            {
-                Vector2Int coordinate = new Vector2Int(x, y);
-                if (!IsBoundaryCell(coordinate) && !exterior.Contains(coordinate)) enclosed.Add(coordinate);
-            }
-            return enclosed;
-        }
-
-        private void AddExteriorCell(Vector2Int coordinate, HashSet<Vector2Int> exterior,
-            Queue<Vector2Int> pending)
-        {
-            if (!IsInsideBoard(coordinate) || IsBoundaryCell(coordinate) || !exterior.Add(coordinate)) return;
-            pending.Enqueue(coordinate);
-        }
+            => BoardTopology.FindEnclosedCells(selectedLevel);
 
         private void MoveBlock(BlockDefinition block, Vector2Int positionValue)
         {
@@ -1645,6 +1520,19 @@ namespace ColorBlockJam.Editor
         }
 
         private string CreateId(string prefix) => $"{prefix}_{Guid.NewGuid():N}";
+
+        private string GetNextLevelAssetPath()
+        {
+            int number = 1;
+            string path;
+            do
+            {
+                path = $"{LevelsFolder}/Level_{number:000}.asset";
+                number++;
+            } while (AssetDatabase.LoadAssetAtPath<LevelDefinition>(path) != null);
+
+            return path;
+        }
 
         private static void EnsureFolder(string path)
         {
