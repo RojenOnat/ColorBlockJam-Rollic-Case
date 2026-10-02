@@ -8,7 +8,7 @@ namespace ColorBlockJam.UI
     [DisallowMultipleComponent]
     public sealed class PausePanelController : MonoBehaviour
     {
-        [SerializeField] private LevelManager levelManager;
+        [SerializeField] private GameFlowController gameFlow;
         [SerializeField] private GameObject panel;
         [SerializeField] private Button pauseButton;
         [SerializeField] private Button resumeButton;
@@ -21,7 +21,7 @@ namespace ColorBlockJam.UI
             if (resumeButton != null) resumeButton.onClick.AddListener(Resume);
             if (restartButton != null) restartButton.onClick.AddListener(Restart);
             if (homeButton != null) homeButton.onClick.AddListener(Home);
-            if (levelManager != null) levelManager.PauseChanged += HandlePauseChanged;
+            if (gameFlow != null) gameFlow.PauseChanged += HandlePauseChanged;
             HandlePauseChanged(false);
         }
 
@@ -31,13 +31,13 @@ namespace ColorBlockJam.UI
             if (resumeButton != null) resumeButton.onClick.RemoveListener(Resume);
             if (restartButton != null) restartButton.onClick.RemoveListener(Restart);
             if (homeButton != null) homeButton.onClick.RemoveListener(Home);
-            if (levelManager != null) levelManager.PauseChanged -= HandlePauseChanged;
+            if (gameFlow != null) gameFlow.PauseChanged -= HandlePauseChanged;
         }
 
-        public void Configure(LevelManager manager, GameObject targetPanel, Button targetPauseButton,
+        public void Configure(GameFlowController flow, GameObject targetPanel, Button targetPauseButton,
             Button targetResumeButton, Button targetRestartButton, Button targetHomeButton)
         {
-            levelManager = manager;
+            gameFlow = flow;
             panel = targetPanel;
             pauseButton = targetPauseButton;
             resumeButton = targetResumeButton;
@@ -45,19 +45,28 @@ namespace ColorBlockJam.UI
             homeButton = targetHomeButton;
         }
 
-        private void Pause() => levelManager?.PauseCurrentLevel();
-        private void Resume() => levelManager?.ResumeCurrentLevel();
+        private void Pause()
+        {
+            gameFlow?.PauseCurrentLevel();
+            HandlePauseChanged(gameFlow != null && gameFlow.IsPaused);
+        }
+
+        private void Resume()
+        {
+            gameFlow?.ResumeCurrentLevel();
+            HandlePauseChanged(false);
+        }
 
         private void Restart()
         {
             HandlePauseChanged(false);
-            levelManager?.RestartCurrentLevel();
+            gameFlow?.RestartCurrentLevel();
         }
 
         private void Home()
         {
             HandlePauseChanged(false);
-            levelManager?.ShowMainMenu();
+            gameFlow?.ShowMainMenu();
         }
 
         private void HandlePauseChanged(bool paused)

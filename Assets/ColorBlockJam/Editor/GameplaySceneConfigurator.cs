@@ -14,36 +14,24 @@ namespace ColorBlockJam.Editor
     {
         private const string GameplayScenePath = "Assets/ColorBlockJam/Scenes/Gameplay.unity";
         private const string UiRoot = "Assets/Game Developer Case Assets/UI/";
-
-        [InitializeOnLoadMethod]
-        private static void PrepareOpenGameplaySceneOnce()
-        {
-            EditorApplication.delayCall += () =>
-            {
-                if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-                Scene scene = SceneManager.GetActiveScene();
-                if (scene.path != GameplayScenePath) return;
-                Canvas canvas = Object.FindObjectOfType<Canvas>();
-                if (canvas == null || FindDescendant(canvas.transform, "SettingsPanel") != null) return;
-                Prepare();
-            };
-        }
+        private const float SettingsTogglePixelsPerUnitMultiplier = 1.5f;
+        private const float PauseActionPixelsPerUnitMultiplier = 3f;
 
         [MenuItem("Color Block Jam/Prepare Gameplay Scene for Submission")]
         public static void Prepare()
         {
             Scene scene = EditorSceneManager.OpenScene(GameplayScenePath, OpenSceneMode.Single);
             Canvas canvas = Object.FindObjectOfType<Canvas>();
-            LevelManager levelManager = Object.FindObjectOfType<LevelManager>();
-            if (canvas == null || levelManager == null)
+            GameFlowController gameFlow = Object.FindObjectOfType<GameFlowController>();
+            if (canvas == null || gameFlow == null)
             {
-                Debug.LogError("Gameplay scene needs a Canvas and LevelManager before it can be prepared.");
+                Debug.LogError("Gameplay scene needs a Canvas and GameFlowController before it can be prepared.");
                 return;
             }
 
             EnsureInputSystemEventSystem();
             BuildSettings(canvas.transform);
-            BuildPause(canvas.transform, levelManager);
+            BuildPause(canvas.transform, gameFlow);
             ConfigureButtonFeedback(canvas);
             ConfigureCanvasScaler(canvas);
             ConfigureBuildSettings();
@@ -60,7 +48,19 @@ namespace ColorBlockJam.Editor
             if (settingsButton == null) return;
             settingsButton.gameObject.SetActive(true);
 
-            RemoveChild(canvas, "SettingsPanel");
+            Transform existingPanel = FindDescendant(canvas, "SettingsPanel");
+            if (existingPanel != null)
+            {
+                Button existingClose = FindDescendant(existingPanel, "CloseButton")?.GetComponent<Button>();
+                SettingsPanelController existingController = canvas.GetComponent<SettingsPanelController>();
+                if (existingController != null && existingClose != null)
+                {
+                    existingController.Configure(existingPanel.gameObject, settingsButton, existingClose);
+                    EditorUtility.SetDirty(existingController);
+                }
+                return;
+            }
+
             RectTransform overlay = CreateRect("SettingsPanel", canvas);
             Stretch(overlay);
             Image dimmer = overlay.gameObject.AddComponent<Image>();
@@ -93,25 +93,42 @@ namespace ColorBlockJam.Editor
             SetCenter(row, new Vector2(650f, 150f), new Vector2(0f, y));
             CreateImage("Icon", row, iconName, new Vector2(115f, 115f), new Vector2(-245f, 0f), false);
             CreateText("Label", row, label.ToUpperInvariant(), 42, new Vector2(300f, 80f), new Vector2(-35f, 0f));
-            Button toggle = CreateButton("Toggle", row, "btn_toggle_on", new Vector2(150f, 95f),
+            Button toggle = CreateButton("Toggle", row, "btn_toggle_on", new Vector2(125f, 125f),
                 new Vector2(245f, 0f));
+            toggle.image.pixelsPerUnitMultiplier = SettingsTogglePixelsPerUnitMultiplier;
             SettingsToggleView view = toggle.gameObject.AddComponent<SettingsToggleView>();
             view.Configure(kind, toggle, toggle.image, toggleSprite, null);
             EditorUtility.SetDirty(view);
         }
 
-        private static void BuildPause(Transform canvas, LevelManager levelManager)
+        private static void BuildPause(Transform canvas, GameFlowController gameFlow)
         {
             Transform gameplayHud = FindDescendant(canvas, "GameplayHUD");
             Transform header = FindDescendant(gameplayHud, "HeaderBar");
             if (header == null) return;
 
-            RemoveChild(header, "PauseButton");
+            Button existingPause = FindDescendant(header, "PauseButton")?.GetComponent<Button>();
+            Transform existingPanel = FindDescendant(canvas, "PausePanel");
+            if (existingPause != null && existingPanel != null)
+            {
+                Button existingResume = FindDescendant(existingPanel, "ResumeButton")?.GetComponent<Button>();
+                Button existingRestart = FindDescendant(existingPanel, "RestartButton")?.GetComponent<Button>();
+                Button existingHome = FindDescendant(existingPanel, "HomeButton")?.GetComponent<Button>();
+                PausePanelController existingController = canvas.GetComponent<PausePanelController>();
+                if (existingController != null && existingResume != null && existingRestart != null &&
+                    existingHome != null)
+                {
+                    existingController.Configure(gameFlow, existingPanel.gameObject, existingPause, existingResume,
+                        existingRestart, existingHome);
+                    EditorUtility.SetDirty(existingController);
+                }
+                return;
+            }
+
             Button pauseButton = CreateButton("PauseButton", header, "Btn_circle_blue_small", new Vector2(112f, 112f),
                 new Vector2(210f, 0f));
             CreateImage("Icon", pauseButton.transform, "ic_pause", new Vector2(62f, 62f), Vector2.zero, false);
 
-            RemoveChild(canvas, "PausePanel");
             RectTransform overlay = CreateRect("PausePanel", canvas);
             Stretch(overlay);
             Image dimmer = overlay.gameObject.AddComponent<Image>();
@@ -122,15 +139,18 @@ namespace ColorBlockJam.Editor
             CreateImage("Header", popup, "bg_popup_header", new Vector2(650f, 165f), new Vector2(0f, 265f), true);
             CreateText("Title", popup, "PAUSED", 56, new Vector2(500f, 90f), new Vector2(0f, 275f));
             Button resume = CreateLabeledButton("ResumeButton", popup, "Btn_popup_green", "RESUME",
-                new Vector2(500f, 125f), new Vector2(0f, 80f));
+                new Vector2(420f, 110f), new Vector2(0f, 80f));
             Button restart = CreateLabeledButton("RestartButton", popup, "Btn_popup_blue", "RESTART",
-                new Vector2(500f, 125f), new Vector2(0f, -80f));
+                new Vector2(420f, 110f), new Vector2(0f, -80f));
             Button home = CreateLabeledButton("HomeButton", popup, "Btn_popup_blue", "HOME",
-                new Vector2(500f, 125f), new Vector2(0f, -240f));
+                new Vector2(420f, 110f), new Vector2(0f, -240f));
+            resume.image.pixelsPerUnitMultiplier = PauseActionPixelsPerUnitMultiplier;
+            restart.image.pixelsPerUnitMultiplier = PauseActionPixelsPerUnitMultiplier;
+            home.image.pixelsPerUnitMultiplier = PauseActionPixelsPerUnitMultiplier;
 
             PausePanelController controller = canvas.GetComponent<PausePanelController>();
             if (controller == null) controller = canvas.gameObject.AddComponent<PausePanelController>();
-            controller.Configure(levelManager, overlay.gameObject, pauseButton, resume, restart, home);
+            controller.Configure(gameFlow, overlay.gameObject, pauseButton, resume, restart, home);
             EditorUtility.SetDirty(controller);
             overlay.gameObject.SetActive(false);
         }
@@ -258,12 +278,6 @@ namespace ColorBlockJam.Editor
             foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
                 if (child.name == name) return child;
             return null;
-        }
-
-        private static void RemoveChild(Transform parent, string name)
-        {
-            Transform existing = FindDescendant(parent, name);
-            if (existing != null && existing.parent == parent) Object.DestroyImmediate(existing.gameObject);
         }
 
         private static Sprite Sprite(string name) => AssetDatabase.LoadAssetAtPath<Sprite>(UiRoot + name + ".png");
