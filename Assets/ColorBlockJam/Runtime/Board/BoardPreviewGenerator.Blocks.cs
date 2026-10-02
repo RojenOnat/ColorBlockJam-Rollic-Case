@@ -254,6 +254,8 @@ namespace ColorBlockJam.Board
 
         private static Transform SetActiveBlockPart(GameObject instance, BlockVisualPart activePart)
         {
+            // The prefab root is also the corner mesh variant. Its name is part of the visual contract,
+            // just like the named child variants below, so it must participate in variant selection.
             string activeName = activePart == BlockVisualPart.Corner
                 ? "Block_Corner"
                 : activePart == BlockVisualPart.Middle
