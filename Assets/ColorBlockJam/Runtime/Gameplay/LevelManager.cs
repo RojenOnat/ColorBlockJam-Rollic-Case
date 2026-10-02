@@ -251,15 +251,8 @@ namespace ColorBlockJam.Gameplay
             if (levelInstance == null || settings == null) return;
 
             Camera levelCamera = levelInstance.GetComponentInChildren<Camera>(true);
-            if (levelCamera == null)
-            {
-                Debug.LogError("Level Runtime Prefab needs a Camera.", levelInstance);
-                return;
-            }
-
-            levelCamera.transform.localPosition = settings.Position;
-            levelCamera.transform.localRotation = Quaternion.Euler(settings.Rotation);
-            levelCamera.fieldOfView = settings.FieldOfView;
+            if (LevelCameraSettingsApplicator.Apply(levelCamera, settings)) return;
+            Debug.LogError("Level Runtime Prefab needs a Camera.", levelInstance);
         }
 
         private void ShowEndGame(bool success)

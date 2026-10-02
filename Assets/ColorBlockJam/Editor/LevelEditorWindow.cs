@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using ColorBlockJam.Board;
+using ColorBlockJam.Gameplay;
 using ColorBlockJam.Levels;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -14,6 +15,8 @@ namespace ColorBlockJam.Editor
         private const string LevelsFolder = "Assets/ColorBlockJam/Levels";
         private const string LevelCatalogPath = "Assets/ColorBlockJam/Levels/LevelCatalog.asset";
         private const string GameplayScenePath = "Assets/ColorBlockJam/Scenes/Gameplay.unity";
+        private const string LevelRuntimePrefabPath = "Assets/ColorBlockJam/Prefab/Level/Level_Runtime.prefab";
+        private const string ScenePreviewRootName = "[CBJ] Level Preview";
         private const string VisualSettingsPath = "Assets/ColorBlockJam/Settings/BoardVisualSettings.asset";
         private const string BlockMaterialPath = "Assets/ColorBlockJam/Materials/Blocks/M_Block.mat";
         private const string GateMaterialPath = "Assets/ColorBlockJam/Materials/Gates/M_Gate.mat";
@@ -1426,23 +1429,43 @@ namespace ColorBlockJam.Editor
         {
             if (selectedLevel == null || visualSettings == null) return;
 
-#if UNITY_2023_1_OR_NEWER
-            BoardPreviewGenerator generator = FindFirstObjectByType<BoardPreviewGenerator>();
-#else
-            BoardPreviewGenerator generator = FindObjectOfType<BoardPreviewGenerator>();
-#endif
-            if (generator == null)
+            GameObject legacyPreview = GameObject.Find("[CBJ] Board Preview");
+            if (legacyPreview != null) Undo.DestroyObjectImmediate(legacyPreview);
+
+            GameObject previousPreview = GameObject.Find(ScenePreviewRootName);
+            if (previousPreview != null) Undo.DestroyObjectImmediate(previousPreview);
+
+            GameObject runtimePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(LevelRuntimePrefabPath);
+            if (runtimePrefab == null)
             {
-                var root = new GameObject("[CBJ] Board Preview");
-                generator = root.AddComponent<BoardPreviewGenerator>();
-                Undo.RegisterCreatedObjectUndo(root, "Create Board Preview");
+                EditorUtility.DisplayDialog("Level Runtime Prefab is missing",
+                    "Create or assign Assets/ColorBlockJam/Prefab/Level/Level_Runtime.prefab before rebuilding the preview.",
+                    "OK");
+                return;
+            }
+
+            GameObject previewRoot = (GameObject)PrefabUtility.InstantiatePrefab(runtimePrefab);
+            previewRoot.name = ScenePreviewRootName;
+            Undo.RegisterCreatedObjectUndo(previewRoot, "Create Level Preview");
+
+            BoardPreviewGenerator generator = previewRoot.GetComponentInChildren<BoardPreviewGenerator>(true);
+            Camera previewCamera = previewRoot.GetComponentInChildren<Camera>(true);
+            if (generator == null || previewCamera == null)
+            {
+                Undo.DestroyObjectImmediate(previewRoot);
+                EditorUtility.DisplayDialog("Level Runtime Prefab is incomplete",
+                    "The prefab needs both a BoardPreviewGenerator and a Camera.", "OK");
+                return;
             }
 
             Undo.RecordObject(generator, "Configure Board Preview");
             generator.Configure(selectedLevel, visualSettings);
             generator.Rebuild();
+            LevelCameraSettingsApplicator.Apply(previewCamera, selectedLevel.CameraSettings);
             EditorUtility.SetDirty(generator);
-            EditorSceneManager.MarkSceneDirty(generator.gameObject.scene);
+            EditorSceneManager.MarkSceneDirty(previewRoot.scene);
+            Selection.activeGameObject = previewRoot;
+            SceneView.lastActiveSceneView?.FrameSelected();
             SceneView.RepaintAll();
         }
 

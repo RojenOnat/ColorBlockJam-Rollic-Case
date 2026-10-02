@@ -16,6 +16,10 @@ MonoBehaviour:
   boardWidth: 10
   boardHeight: 10
   timerSeconds: 60
+  cameraSettings:
+    position: {x: 0, y: 7.5, z: -9}
+    rotation: {x: 42, y: 0, z: 0}
+    fieldOfView: 60
   blocks:
   - id: Block_be92627e3c5145cd8bc38b30e9706132
     color: 0
