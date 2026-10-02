@@ -2,9 +2,25 @@
 
 A portrait Unity vertical slice built for the Rollic Game Developer Case. The repository contains five playable levels, a data-driven runtime flow, persistent progression and coins, and a visual level editor intended for non-technical level designers.
 
+<p align="center">
+  <img src="Documentation/Images/Gameplay.png" width="280" alt="Color Block Jam gameplay">
+</p>
+
+<p align="center">
+  <strong>Move each color block through its matching gate before time runs out.</strong>
+</p>
+
 ## Project documentation
 
 The illustrated [Color Block Jam Case Study](Documentation/ColorBlockJam_Case_Study.pdf) presents the gameplay loop, UI flow, runtime architecture, level-authoring workflow, feature tools, validation, tuning, and delivery setup.
+
+## Game flow
+
+| Home and progression | Runtime gameplay |
+|:---:|:---:|
+| <img src="Documentation/Images/MainMenu.png" width="250" alt="Main menu and level progression"> | <img src="Documentation/Images/Gameplay.png" width="250" alt="Grid gameplay with HUD"> |
+
+The Home screen shows persistent progression and coins. During gameplay, the HUD presents the visible level number, countdown, restart control, and current balance. Completing a level grants its authored reward and advances the visible level count; the five authored datasets loop behind that continuous progression.
 
 ## Requirements
 
@@ -60,6 +76,10 @@ Project-owned assets follow one naming convention: PascalCase for folders and pr
 
 Open **Color Block Jam > Level Editor**.
 
+<p align="center">
+  <img src="Documentation/Images/LevelEditor.png" width="850" alt="Color Block Jam visual level editor">
+</p>
+
 1. Select an existing level or click **New**.
 2. Set board width, height, timer, reward, camera, and directional-light values.
 3. Use **Wall**, **Gate**, and **Block** modes to paint the board. Right-click removes an item where supported.
@@ -69,6 +89,10 @@ Open **Color Block Jam > Level Editor**.
 7. Click **Rebuild Preview** to inspect the same runtime prefab, camera, light, and board visuals used in play mode.
 
 Level assets live in `Assets/ColorBlockJam/Levels` and use the `Level_###` naming convention. Board presentation is configured through `Assets/ColorBlockJam/Settings/BoardVisualSettings.asset`; reusable runtime prefabs are under `Assets/ColorBlockJam/Prefabs`.
+
+<p align="center">
+  <img src="Documentation/Images/LevelComplete.png" width="230" alt="Level complete reward panel">
+</p>
 
 ## Testing and delivery
 
