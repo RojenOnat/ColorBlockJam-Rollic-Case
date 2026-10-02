@@ -190,7 +190,7 @@ namespace ColorBlockJam.Levels
     public sealed class LevelDefinition : ScriptableObject
     {
         public const int MinimumBoardSize = 3;
-        public const int MaximumBoardSize = 12;
+        public const int MaximumBoardSize = 30;
 
         [SerializeField] private string displayName = "New Level";
         [SerializeField, Range(MinimumBoardSize, MaximumBoardSize)] private int boardWidth = 6;
