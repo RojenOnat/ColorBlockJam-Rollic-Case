@@ -103,7 +103,7 @@ MonoBehaviour:
       movementMode: 0
       iceLockEnabled: 0
       iceUnlockAfter: 1
-  doors:
+  gates:
   - id: Gate_d37f105c8c244f27b8a6f05c5c00833f
     color: 0
     edge: 0

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ColorBlockJam.Levels
 {
@@ -132,7 +133,7 @@ namespace ColorBlockJam.Levels
     }
 
     [Serializable]
-    public sealed class DoorDefinition
+    public sealed class GateDefinition
     {
         [SerializeField] private string id;
         [SerializeField] private BlockColor color;
@@ -152,7 +153,7 @@ namespace ColorBlockJam.Levels
         public Vector2Int Position => position;
         public int QuarterTurns => quarterTurns;
 
-        public DoorDefinition(string id, BlockColor color, BoardEdge edge, int edgePosition)
+        public GateDefinition(string id, BlockColor color, BoardEdge edge, int edgePosition)
         {
             this.id = id;
             this.color = color;
@@ -161,7 +162,7 @@ namespace ColorBlockJam.Levels
             width = 1;
         }
 
-        public DoorDefinition(string id, BlockColor color, Vector2Int position, int quarterTurns)
+        public GateDefinition(string id, BlockColor color, Vector2Int position, int quarterTurns)
         {
             this.id = id;
             this.color = color;
@@ -211,7 +212,8 @@ namespace ColorBlockJam.Levels
         [SerializeField] private LevelCameraSettings cameraSettings = new LevelCameraSettings();
         [SerializeField] private LevelLightingSettings lightingSettings = new LevelLightingSettings();
         [SerializeField] private List<BlockDefinition> blocks = new List<BlockDefinition>();
-        [SerializeField] private List<DoorDefinition> doors = new List<DoorDefinition>();
+        [FormerlySerializedAs("doors")]
+        [SerializeField] private List<GateDefinition> gates = new List<GateDefinition>();
         [SerializeField] private List<WallDefinition> walls = new List<WallDefinition>();
 
         public string DisplayName => displayName;
@@ -237,7 +239,7 @@ namespace ColorBlockJam.Levels
             }
         }
         public IReadOnlyList<BlockDefinition> Blocks => blocks;
-        public IReadOnlyList<DoorDefinition> Doors => doors;
+        public IReadOnlyList<GateDefinition> Gates => gates;
         public IReadOnlyList<WallDefinition> Walls => walls;
 
         public void SetDisplayName(string value) => displayName = string.IsNullOrWhiteSpace(value) ? name : value.Trim();
@@ -256,8 +258,8 @@ namespace ColorBlockJam.Levels
             LightingSettings.SetDirectionalLightRotation(rotation);
         public void AddBlock(BlockDefinition block) => blocks.Add(block);
         public void RemoveBlock(BlockDefinition block) => blocks.Remove(block);
-        public void AddDoor(DoorDefinition door) => doors.Add(door);
-        public void RemoveDoor(DoorDefinition door) => doors.Remove(door);
+        public void AddGate(GateDefinition gate) => gates.Add(gate);
+        public void RemoveGate(GateDefinition gate) => gates.Remove(gate);
         public void AddWall(WallDefinition wall) => walls.Add(wall);
         public void RemoveWall(WallDefinition wall) => walls.Remove(wall);
 

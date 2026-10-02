@@ -38,14 +38,19 @@ A portrait Unity vertical slice built for the Rollic Game Developer Case. The re
 The project keeps authored data, game rules, presentation, and editor tooling separate:
 
 - **Level data:** `LevelDefinition` ScriptableObjects contain board layout and per-level presentation values. `LevelCatalog` defines play order.
-- **Runtime composition:** `LevelManager` owns navigation and level lifecycle. `LevelRuntimeFactory` builds a disposable runtime instance and returns a `LevelRuntimeContext` containing the board, input, and countdown services.
+- **Runtime composition:** `LevelManager` owns only level selection and runtime lifecycle. `LevelRuntimeFactory` builds a disposable runtime instance and returns a `LevelRuntimeContext` containing the board, input, and countdown services.
+- **Session rules:** `LevelSessionController` resolves timer, pause, remaining-block, success, and failure state for one level attempt.
+- **Screen flow:** `GameFlowController` binds navigation, HUD updates, rewards, and Home/gameplay/outcome screen transitions to lifecycle events.
 - **Rules:** `BoardGridState`, `BoardTopology`, `BlockTopology`, and `LevelValidator` provide reusable board rules without UI dependencies.
 - **Input and presentation:** `GameplayInputController`, `BlockExitMotor`, HUD views, and panel controllers present state and forward player intent.
 - **Persistence:** `LevelProgress`, `GoldWallet`, and `PlayerSettings` isolate `PlayerPrefs` keys from gameplay and UI code.
 - **Designer tuning:** `Assets/ColorBlockJam/Resources/ColorBlockJam/GameTuning.asset` exposes drag sensitivity, drag lift, block exit speed, and success-panel delay.
 - **Assembly boundaries:** runtime, editor, and EditMode tests compile in separate assembly definitions.
+- **Editor organization:** the level editor is split into drawing, input, inspector, mutation, asset, and geometry files. Board composition is split into gate, block, and wall builders.
 
 Scene object references are serialized in Unity. Runtime code does not locate UI by object name or displayed text.
+
+Project-owned assets follow one naming convention: PascalCase for folders and prefabs, `M_` for materials, and `Level_###` for authored level assets. Runtime prefabs live under `Assets/ColorBlockJam/Prefabs`; supplied case art remains unchanged under `Assets/Game Developer Case Assets`.
 
 ## Level authoring workflow
 
@@ -59,7 +64,7 @@ Open **Color Block Jam > Level Editor**.
 6. Click **Save**. The editor stores the ScriptableObject and synchronizes `LevelCatalog`.
 7. Click **Rebuild Preview** to inspect the same runtime prefab, camera, light, and board visuals used in play mode.
 
-Level assets live in `Assets/ColorBlockJam/Levels` and use the `Level_###` naming convention. Board presentation is configured through `Assets/ColorBlockJam/Settings/BoardVisualSettings.asset`; reusable runtime prefabs are under `Assets/ColorBlockJam/Prefab`.
+Level assets live in `Assets/ColorBlockJam/Levels` and use the `Level_###` naming convention. Board presentation is configured through `Assets/ColorBlockJam/Settings/BoardVisualSettings.asset`; reusable runtime prefabs are under `Assets/ColorBlockJam/Prefabs`.
 
 ## Testing and delivery
 

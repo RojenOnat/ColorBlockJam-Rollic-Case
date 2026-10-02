@@ -444,7 +444,7 @@ MonoBehaviour:
       movementMode: 0
       iceLockEnabled: 0
       iceUnlockAfter: 1
-  doors:
+  gates:
   - id: Gate_f9a1a44bff8a4b678924f10deab27e4a
     color: 1
     edge: 0

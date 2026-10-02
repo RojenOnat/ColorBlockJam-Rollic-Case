@@ -16,7 +16,7 @@ MonoBehaviour:
   straightWallPrefab: {fileID: 6636776879154377481, guid: 28532467e39a0f44886ed98e6bddd440, type: 3}
   cornerWallPrefab: {fileID: 2914791590249217770, guid: d785b6064552b104cbc1934add9e9504, type: 3}
   gatePrefab: {fileID: 1110199887740494200, guid: 0020b4799b838be468da1d73efb47ef0, type: 3}
-  doorArrowPrefab: {fileID: 7833661932886393395, guid: 90015f64602fff949859c986c29a7662, type: 3}
+  gateArrowPrefab: {fileID: 7833661932886393395, guid: 90015f64602fff949859c986c29a7662, type: 3}
   blockPrefab: {fileID: 3971904819921418400, guid: 2337a40fc38facf45a9f6964e1b33d22, type: 3}
   directionArrowPrefab: {fileID: 2017753944788222121, guid: e4d29bfc2f086f346aeb5b4df6641b36, type: 3}
   iceTexture: {fileID: 2800000, guid: 3a42657c35c6c4ec881993628cbfb99a, type: 3}
@@ -33,12 +33,11 @@ MonoBehaviour:
   wallOffset: {x: 0, y: 0, z: 0}
   cornerOffset: {x: 0, y: 0, z: 0}
   gateOffset: {x: 0, y: 0, z: 0}
-  doorArrowOffset: {x: 0, y: 1, z: 0}
-  doorArrowVisualZ: 0.05
+  gateArrowOffset: {x: 0, y: 1, z: 0}
   blockOffset: {x: 0, y: 0, z: 0}
   straightWallBaseEuler: {x: 0, y: 0, z: 0}
   gateBaseEuler: {x: 0, y: 0, z: 0}
-  doorArrowBaseEuler: {x: 0, y: 0, z: 0}
+  gateArrowBaseEuler: {x: 0, y: 0, z: 0}
   cornerBaseEuler: {x: 0, y: 0, z: 0}
   tileEuler: {x: 0, y: 0, z: 0}
   blockBaseEuler: {x: 0, y: 0, z: 0}

@@ -24,7 +24,7 @@ namespace ColorBlockJam.Levels
         public static bool IsGate(LevelDefinition level, Vector2Int cell)
         {
             if (level == null) return false;
-            foreach (DoorDefinition gate in level.Doors)
+            foreach (GateDefinition gate in level.Gates)
                 if (gate.GridPlaced && gate.Position == cell) return true;
             return false;
         }

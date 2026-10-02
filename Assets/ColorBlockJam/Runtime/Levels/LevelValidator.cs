@@ -36,7 +36,7 @@ namespace ColorBlockJam.Levels
                 issues.Add(new ValidationIssue(ValidationSeverity.Error, "Timer must be greater than zero."));
             var occupiedCells = new Dictionary<Vector2Int, string>();
             var blockColors = new HashSet<BlockColor>();
-            var doorColors = new HashSet<BlockColor>();
+            var gateColors = new HashSet<BlockColor>();
             var ids = new HashSet<string>();
             var boundaryCells = new HashSet<Vector2Int>();
 
@@ -81,57 +81,57 @@ namespace ColorBlockJam.Levels
                         $"More than one boundary object occupies ({wall.Position.x}, {wall.Position.y})."));
             }
 
-            foreach (DoorDefinition door in level.Doors)
+            foreach (GateDefinition gate in level.Gates)
             {
-                doorColors.Add(door.Color);
-                CheckId(door.Id, "door", ids, issues);
-                if (door.GridPlaced)
+                gateColors.Add(gate.Color);
+                CheckId(gate.Id, "gate", ids, issues);
+                if (gate.GridPlaced)
                 {
-                    if (!IsInside(level, door.Position))
+                    if (!IsInside(level, gate.Position))
                     {
                         issues.Add(new ValidationIssue(ValidationSeverity.Error,
-                            $"Gate {door.Id} is outside the board at ({door.Position.x}, {door.Position.y})."));
+                            $"Gate {gate.Id} is outside the board at ({gate.Position.x}, {gate.Position.y})."));
                     }
-                    else if (!boundaryCells.Add(door.Position))
+                    else if (!boundaryCells.Add(gate.Position))
                     {
                         issues.Add(new ValidationIssue(ValidationSeverity.Error,
-                            $"More than one boundary object occupies ({door.Position.x}, {door.Position.y})."));
+                            $"More than one boundary object occupies ({gate.Position.x}, {gate.Position.y})."));
                     }
                     continue;
                 }
 
-                int edgeLength = door.Edge == BoardEdge.Top || door.Edge == BoardEdge.Bottom
+                int edgeLength = gate.Edge == BoardEdge.Top || gate.Edge == BoardEdge.Bottom
                     ? level.BoardWidth
                     : level.BoardHeight;
-                if (door.EdgePosition < 0 || door.EdgePosition + door.Width > edgeLength)
+                if (gate.EdgePosition < 0 || gate.EdgePosition + gate.Width > edgeLength)
                 {
                     issues.Add(new ValidationIssue(ValidationSeverity.Error,
-                        $"Door {door.Id} does not fit on the {door.Edge} edge."));
+                        $"Gate {gate.Id} does not fit on the {gate.Edge} edge."));
                 }
             }
 
-            foreach (DoorDefinition door in level.Doors)
+            foreach (GateDefinition gate in level.Gates)
             {
-                if (!door.GridPlaced || !IsInside(level, door.Position)) continue;
-                bool horizontal = boundaryCells.Contains(door.Position + Vector2Int.left) &&
-                                  boundaryCells.Contains(door.Position + Vector2Int.right);
-                bool vertical = boundaryCells.Contains(door.Position + Vector2Int.down) &&
-                                boundaryCells.Contains(door.Position + Vector2Int.up);
+                if (!gate.GridPlaced || !IsInside(level, gate.Position)) continue;
+                bool horizontal = boundaryCells.Contains(gate.Position + Vector2Int.left) &&
+                                  boundaryCells.Contains(gate.Position + Vector2Int.right);
+                bool vertical = boundaryCells.Contains(gate.Position + Vector2Int.down) &&
+                                boundaryCells.Contains(gate.Position + Vector2Int.up);
                 if (horizontal == vertical)
                     issues.Add(new ValidationIssue(ValidationSeverity.Error,
-                        $"Gate {door.Id} must be placed on a straight boundary segment."));
+                        $"Gate {gate.Id} must be placed on a straight boundary segment."));
             }
 
             foreach (BlockColor color in blockColors)
             {
-                if (!doorColors.Contains(color))
-                    issues.Add(new ValidationIssue(ValidationSeverity.Error, $"{color} blocks have no matching door."));
+                if (!gateColors.Contains(color))
+                    issues.Add(new ValidationIssue(ValidationSeverity.Error, $"{color} blocks have no matching gate."));
             }
 
-            foreach (BlockColor color in doorColors)
+            foreach (BlockColor color in gateColors)
             {
                 if (!blockColors.Contains(color))
-                    issues.Add(new ValidationIssue(ValidationSeverity.Warning, $"The {color} door has no matching block."));
+                    issues.Add(new ValidationIssue(ValidationSeverity.Warning, $"The {color} gate has no matching block."));
             }
 
             return issues;
