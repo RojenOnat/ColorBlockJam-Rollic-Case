@@ -24,6 +24,7 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private Button playButton;
         [SerializeField] private Camera sceneCamera;
         [SerializeField] private HudTimerView timerView;
+        [SerializeField] private HudLevelView levelView;
         [SerializeField] private LevelPathView levelPathView;
 
         [Header("Navigation Buttons")]
@@ -93,6 +94,7 @@ namespace ColorBlockJam.Gameplay
             currentLevel = level;
             LevelProgress.CurrentLevelIndex = currentLevelIndex;
             levelPathView?.Refresh(currentLevelIndex);
+            levelView?.SetLevelNumber(currentLevelIndex + 1);
             hasLevelResolved = false;
             isAwaitingExitResolution = false;
 
