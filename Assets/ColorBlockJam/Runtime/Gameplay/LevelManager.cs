@@ -28,6 +28,7 @@ namespace ColorBlockJam.Gameplay
         [SerializeField] private LevelPathView levelPathView;
 
         [Header("Navigation Buttons")]
+        [SerializeField] private Button hudRestartButton;
         [SerializeField] private Button retryButton;
         [SerializeField] private Button failHomeButton;
         [SerializeField] private Button successHomeButton;
@@ -49,6 +50,7 @@ namespace ColorBlockJam.Gameplay
         private void Awake()
         {
             if (playButton != null) playButton.onClick.AddListener(StartCurrentLevel);
+            if (hudRestartButton != null) hudRestartButton.onClick.AddListener(RestartCurrentLevel);
             if (retryButton != null) retryButton.onClick.AddListener(RestartCurrentLevel);
             if (failHomeButton != null) failHomeButton.onClick.AddListener(ShowMainMenu);
             if (successHomeButton != null) successHomeButton.onClick.AddListener(ShowMainMenu);
@@ -68,6 +70,7 @@ namespace ColorBlockJam.Gameplay
         private void OnDestroy()
         {
             if (playButton != null) playButton.onClick.RemoveListener(StartCurrentLevel);
+            if (hudRestartButton != null) hudRestartButton.onClick.RemoveListener(RestartCurrentLevel);
             if (retryButton != null) retryButton.onClick.RemoveListener(RestartCurrentLevel);
             if (failHomeButton != null) failHomeButton.onClick.RemoveListener(ShowMainMenu);
             if (successHomeButton != null) successHomeButton.onClick.RemoveListener(ShowMainMenu);

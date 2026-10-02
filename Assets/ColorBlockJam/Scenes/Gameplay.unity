@@ -4338,6 +4338,7 @@ MonoBehaviour:
   timerView: {fileID: 639566600}
   levelView: {fileID: 987309231}
   levelPathView: {fileID: 686624392}
+  hudRestartButton: {fileID: 445356905}
   retryButton: {fileID: 7065650}
   failHomeButton: {fileID: 1074848518}
   successHomeButton: {fileID: 1612964868}
