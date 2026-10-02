@@ -50,6 +50,25 @@ namespace ColorBlockJam.Levels
         }
     }
 
+    [Serializable]
+    public sealed class LevelCameraSettings
+    {
+        [SerializeField] private Vector3 position = new Vector3(0f, 7.5f, -9f);
+        [SerializeField] private Vector3 rotation = new Vector3(42f, 0f, 0f);
+        [SerializeField, Range(20f, 100f)] private float fieldOfView = 60f;
+
+        public Vector3 Position => position;
+        public Vector3 Rotation => rotation;
+        public float FieldOfView => fieldOfView;
+
+        public void Set(Vector3 newPosition, Vector3 newRotation, float newFieldOfView)
+        {
+            position = newPosition;
+            rotation = newRotation;
+            fieldOfView = Mathf.Clamp(newFieldOfView, 20f, 100f);
+        }
+    }
+
     public enum BoardEdge
     {
         Top,
@@ -177,6 +196,7 @@ namespace ColorBlockJam.Levels
         [SerializeField, Range(MinimumBoardSize, MaximumBoardSize)] private int boardWidth = 6;
         [SerializeField, Range(MinimumBoardSize, MaximumBoardSize)] private int boardHeight = 8;
         [SerializeField, Min(1)] private int timerSeconds = 60;
+        [SerializeField] private LevelCameraSettings cameraSettings = new LevelCameraSettings();
         [SerializeField] private List<BlockDefinition> blocks = new List<BlockDefinition>();
         [SerializeField] private List<DoorDefinition> doors = new List<DoorDefinition>();
         [SerializeField] private List<WallDefinition> walls = new List<WallDefinition>();
@@ -185,6 +205,14 @@ namespace ColorBlockJam.Levels
         public int BoardWidth => boardWidth;
         public int BoardHeight => boardHeight;
         public int TimerSeconds => timerSeconds;
+        public LevelCameraSettings CameraSettings
+        {
+            get
+            {
+                if (cameraSettings == null) cameraSettings = new LevelCameraSettings();
+                return cameraSettings;
+            }
+        }
         public IReadOnlyList<BlockDefinition> Blocks => blocks;
         public IReadOnlyList<DoorDefinition> Doors => doors;
         public IReadOnlyList<WallDefinition> Walls => walls;
@@ -198,6 +226,8 @@ namespace ColorBlockJam.Levels
         }
 
         public void SetTimer(int seconds) => timerSeconds = Mathf.Max(1, seconds);
+        public void SetCameraSettings(Vector3 position, Vector3 rotation, float fieldOfView) =>
+            CameraSettings.Set(position, rotation, fieldOfView);
         public void AddBlock(BlockDefinition block) => blocks.Add(block);
         public void RemoveBlock(BlockDefinition block) => blocks.Remove(block);
         public void AddDoor(DoorDefinition door) => doors.Add(door);

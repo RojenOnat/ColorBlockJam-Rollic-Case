@@ -556,12 +556,19 @@ namespace ColorBlockJam.Editor
             int height = EditorGUILayout.IntSlider("Height", selectedLevel.BoardHeight,
                 LevelDefinition.MinimumBoardSize, LevelDefinition.MaximumBoardSize);
             int timer = EditorGUILayout.IntField("Timer (sec)", selectedLevel.TimerSeconds);
+            EditorGUILayout.Space(8f);
+            GUILayout.Label("CAMERA", EditorStyles.boldLabel);
+            LevelCameraSettings cameraSettings = selectedLevel.CameraSettings;
+            Vector3 cameraPosition = EditorGUILayout.Vector3Field("Position", cameraSettings.Position);
+            Vector3 cameraRotation = EditorGUILayout.Vector3Field("Rotation", cameraSettings.Rotation);
+            float cameraFieldOfView = EditorGUILayout.Slider("Field of View", cameraSettings.FieldOfView, 20f, 100f);
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(selectedLevel, "Edit Level Settings");
                 selectedLevel.SetDisplayName(displayName);
                 selectedLevel.SetBoardSize(width, height);
                 selectedLevel.SetTimer(timer);
+                selectedLevel.SetCameraSettings(cameraPosition, cameraRotation, cameraFieldOfView);
                 MarkChanged();
             }
 

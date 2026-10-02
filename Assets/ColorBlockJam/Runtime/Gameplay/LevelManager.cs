@@ -101,6 +101,7 @@ namespace ColorBlockJam.Gameplay
 
             currentLevelInstance = Instantiate(levelRuntimePrefab);
             currentLevelInstance.name = $"RuntimeLevel_{currentLevelIndex + 1:000}";
+            ApplyCameraSettings(currentLevelInstance, currentLevel.CameraSettings);
             BoardPreviewGenerator boardBuilder = currentLevelInstance.GetComponentInChildren<BoardPreviewGenerator>();
             if (boardBuilder == null)
             {
@@ -243,6 +244,22 @@ namespace ColorBlockJam.Gameplay
         private void SetGameplayInputEnabled(bool enabled)
         {
             if (currentInput != null) currentInput.SetInputEnabled(enabled);
+        }
+
+        private static void ApplyCameraSettings(GameObject levelInstance, LevelCameraSettings settings)
+        {
+            if (levelInstance == null || settings == null) return;
+
+            Camera levelCamera = levelInstance.GetComponentInChildren<Camera>(true);
+            if (levelCamera == null)
+            {
+                Debug.LogError("Level Runtime Prefab needs a Camera.", levelInstance);
+                return;
+            }
+
+            levelCamera.transform.localPosition = settings.Position;
+            levelCamera.transform.localRotation = Quaternion.Euler(settings.Rotation);
+            levelCamera.fieldOfView = settings.FieldOfView;
         }
 
         private void ShowEndGame(bool success)
