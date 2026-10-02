@@ -30,13 +30,6 @@ namespace ColorBlockJam.Board
             RestoreGeneratedBlockColors();
         }
 
-        private void Start()
-        {
-            // Generated preview objects exist in edit mode. Recreate them for play mode so every
-            // current runtime feature component is present instead of relying on an old preview.
-            if (Application.isPlaying) Rebuild();
-        }
-
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
         private static void RegisterPlayModeSelectionGuard()
